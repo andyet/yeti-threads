@@ -1,0 +1,12 @@
+{
+    "isDev": true,
+    "server": {
+        "port": 8000,
+        "host": "localhost"
+    },
+    "db": "postgres://fritzy@localhost/forum",
+    "thoonk": {
+        "host": "127.0.0.1",
+        "port": 6379
+    }
+}

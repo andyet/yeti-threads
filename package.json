@@ -1,0 +1,23 @@
+{
+  "name": "forarm",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Nathan Fritz",
+  "license": "MIT",
+  "dependencies": {
+    "gatepost": "^2.0.1",
+    "archy": "^1.0.0",
+    "joi": "^6.3.0",
+    "getconfig": "^2.1.0",
+    "hapi": "^8.4.0",
+    "pg": "^4.3.0",
+    "platform-gateway-auth": "^2.0.0",
+    "good": "^6.1.1",
+    "good-console": "^5.0.0",
+    "lout": "^6.2.2"
+  }
+}
