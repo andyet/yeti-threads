@@ -78,6 +78,8 @@ CREATE TABLE threads (
     forum_id INTEGER REFERENCES forums(id) ON DELETE CASCADE,
     author TEXT,
     subject TEXT,
+    open BOOLEAN NOT NULL DEFAULT True,
+    locked BOOLEAN NOT NULL DEFAULT False,
     tags TEXT[],
     created TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     updated TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
@@ -87,7 +89,8 @@ CREATE TABLE threads (
 CREATE TRIGGER update_threads_updated BEFORE UPDATE ON threads FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
 
 CREATE INDEX idx_threads_tags on threads USING GIN (tags);
-CREATE INDEX idx_threads_author on threads(author);
+create index idx_threads_author on threads(author);
+create index idx_threads_open on threads(open);
 CREATE INDEX idx_threads_forum_id on threads(forum_id);
 
 CREATE TABLE threads_permission (

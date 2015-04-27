@@ -11,6 +11,7 @@ exports.register = function (plugin, options, done) {
     server.route({ method: 'get', path: '/forumTree', config: Forums.getTree});
     server.route({ method: 'put', path: '/forums/{forum_id}', config: Forums.update});
     server.route({ method: 'post', path: '/forums', config: Forums.create});
+    server.route({ method: 'delete', path: '/forums/{forum_id}', config: Forums.delete});
     //post
     //put
 

@@ -1,7 +1,7 @@
 var gatepost = require('gatepost');
 
 var Forum = new gatepost.Model({
-    id: {type: 'integer'},
+    id: {type: 'integer', primary: true},
     owner: {type: 'string'},
     name: {},
     description: {},
@@ -16,8 +16,6 @@ var Forum = new gatepost.Model({
     name: 'forum'
 });
 
-Forum.registerInsert({table: 'forums'});
-Forum.registerUpdate({table: 'forums'});
 
 var ForumTree = new gatepost.Model({
     results: {type: 'array'}
@@ -33,7 +31,6 @@ ForumTree.registerFactorySQL({
 
 Forum.getTree = ForumTree.get;
 
-
 Forum.registerFactorySQL({
     name: 'get',
     sql: [
@@ -43,6 +40,9 @@ Forum.registerFactorySQL({
     oneArg: true,
     oneResult: true
 });
+
+Forum.registerInsert({table: 'forums'});
+Forum.registerUpdate({table: 'forums'});
 
 Forum.registerFactorySQL({
     name: 'getForum',

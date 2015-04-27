@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "NODE_ENV=test lab -l"
   },
   "author": "Nathan Fritz",
   "license": "MIT",
@@ -18,6 +18,10 @@
     "platform-gateway-auth": "^2.0.0",
     "good": "^6.1.1",
     "good-console": "^5.0.0",
-    "lout": "^6.2.2"
+    "lout": "^6.2.2",
+    "lodash": "^3.7.0",
+    "lab": "^5.8.0",
+    "cod": "^0.4.3",
+    "code": "^1.4.0"
   }
 }
