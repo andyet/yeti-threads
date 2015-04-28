@@ -18,6 +18,7 @@ exports.register = function (plugin, options, done) {
     server.route({ method: 'get', path: '/forums/{forum_id}/threads', config: Threads.listByForum});
 
     server.route({ method: 'get', path: '/threads', config: Threads.list});
+    server.route({ method: 'get', path: '/threads/{thread_id}', config: Threads.get});
     server.route({ method: 'get', path: '/threads/{thread_id}/posts', config: Posts.listByThread});
     server.route({ method: 'post', path: '/threads', config: Threads.create});
     server.route({ method: 'put', path: '/threads/{thread_id}', config: Threads.update});

@@ -79,3 +79,4 @@ Thread.registerInsert({table: 'threads'});
 Thread.registerUpdate({table: 'threads'});
 
 
+module.exports = Thread;

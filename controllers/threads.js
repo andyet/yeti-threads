@@ -71,7 +71,7 @@ ThreadsController.listByForum = {
 
 ThreadsController.create = {
     handler: function (request, reply) {
-        var thread = models.Thread.create(request.params);
+        var thread = models.Thread.create(request.payload);
         thread.insert(function (err) {
             err = BoomPg(err);
             if (err) {

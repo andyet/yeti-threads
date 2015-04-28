@@ -60,7 +60,7 @@ PostsController.listByThread = {
     },
     validate: {
         params: {
-            forum_id: joi.string()
+            thread_id: joi.string()
         },
         query: {
             limit: joi.number().integer(),
@@ -71,7 +71,7 @@ PostsController.listByThread = {
 
 PostsController.create = {
     handler: function (request, reply) {
-        var post = models.Post.create(request.params);
+        var post = models.Post.create(request.payload);
         post.insert(function (err) {
             err = BoomPg(err);
             if (err) {

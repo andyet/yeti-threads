@@ -8,9 +8,15 @@ var Post = new gatepost.Model({
     thread_id: {type: 'integer'},
     path: {
         processIn: function (value) {
+            if (!value) {
+                return [];
+            }
             return value.split('.');
         },
         processOut: function (value) {
+            if (!value) {
+                return '';
+            }
             return value.join('.');
         }
     },
@@ -88,11 +94,11 @@ PostPage.registerFactorySQL({
 "json_agg(row_to_json(post_rows)) as results,",
 "count(post_rows.*) as count",
 "FROM (WITH RECURSIVE included_posts(id, author, body, parent_id, thread_id, path, created, updated) AS (",
-"    SELECT id, author, body, parent_id, thread_id, path, created, updated FROM threads WHERE parent_id=NULL AND thread_id=$thread_id",
+"    SELECT id, author, body, parent_id, thread_id, path, created, updated FROM posts WHERE parent_id IS NULL AND thread_id=$thread_id",
 "UNION ALL",
 "    SELECT p.id, p.author, p.body, p.parent_id, p.thread_id, p.path, p.created, p.updated FROM included_posts inc_p, posts p WHERE p.parent_id=inc_p.id",
 ")",
-"SELECT * FROM included_forums ORDER BY path LIMIT $limit OFFSET $offset) post_rows"
+"SELECT * FROM included_posts ORDER BY path LIMIT $limit OFFSET $offset) post_rows"
     ].join(' '),
     defaults: {
         limit: 20,
@@ -104,3 +110,4 @@ PostPage.registerFactorySQL({
 Post.all = PostPage.all;
 Post.allByThread = PostPage.allByThread;
 
+module.exports = Post;
