@@ -27,6 +27,26 @@ ForumsController.get = {
     }
 };
 
+ForumsController.list = {
+    handler: function (request, reply) {
+        models.Forums.all(request.query, function (err, forum) {
+            err = BoomPg(err, forum, true);
+            if (err) {
+                request.log(['forum', 'get', 'error'], 'problem loading forum: ' + request.params.forum_id);
+                return reply(err);
+            }
+            request.log(['forum', 'get'], 'loaded: ' + request.params.forum_id);
+            return reply(forum);
+        });
+    },
+    validate: {
+        query: {
+            offset: joi.number().integer(),
+            limit: joi.number().integer()
+        }
+    }
+};
+
 ForumsController.getTree = {
     handler: function (request, reply) {
         models.Forums.getTree(function (err, forum) {

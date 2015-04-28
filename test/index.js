@@ -48,10 +48,22 @@ lab.experiment('forums', function () {
         }, function (res) {
             code.expect(res.statusCode).to.equal(201);
             code.expect(res.payload).to.not.equal('');
-            console.log(res.payload);
             forum = JSON.parse(res.payload);
-            console.log(forum.id);
             code.expect(forum.name).to.equal('test1');
+            done();
+        });
+    });
+    lab.test('can list forums', function (done) {
+        server.inject({
+            method: 'get',
+            url: '/forums/' + forum.id,
+            headers: {
+            }
+        }, function (res) {
+            code.expect(res.statusCode).to.equal(200);
+            code.expect(res.payload).to.not.equal('');
+            var pl = JSON.parse(res.payload);
+            code.expect(pl.name).to.equal('test1');
             done();
         });
     });
@@ -73,7 +85,20 @@ lab.experiment('forums', function () {
             done();
         });
     });
-
+    lab.test('can list forums', function (done) {
+        server.inject({
+            method: 'get',
+            url: '/forums',
+            headers: {
+            }
+        }, function (res) {
+            code.expect(res.statusCode).to.equal(200);
+            code.expect(res.payload).to.not.equal('');
+            var pl = JSON.parse(res.payload);
+            code.expect(pl.count).to.equal(1);
+            done();
+        });
+    });
     lab.test('can delete forum', function (done) {
         server.inject({
             method: 'delete',
