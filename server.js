@@ -43,12 +43,12 @@ server.register(plugins, function (err) {
         server.log(['error'], err.message);
         throw err;
     }
-    server.log(['startup'], 'Loaded internal-api plugins');
+    server.log(['startup'], 'Loaded forum plugins');
 
     client.connect(function (dberr) {
         server.start(function (err) {
             if (dberr || err) {
-                server.log(['error'], 'Failed to start internal-api server');
+                server.log(['error'], 'Failed to start forum server');
                 server.log(['error'], dberr || err.message);
                 throw err;
             }

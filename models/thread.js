@@ -25,6 +25,15 @@ Thread.registerFactorySQL({
     oneResult: true
 });
 
+Thread.registerFactorySQL({
+    name: "delete",
+    sql: [
+        "DELETE FROM threads WHERE id=$arg"
+    ].join(' '),
+    oneArg: true,
+    oneResult: true
+});
+
 var ThreadPage = new gatepost.Model({
     results: {collection: 'thread'},
     count: {type: 'integer'},
@@ -32,7 +41,7 @@ var ThreadPage = new gatepost.Model({
 });
 
 ThreadPage.registerFactorySQL({
-    name: "list",
+    name: "all",
     sql: [
         "SELECT (SELECT n_live_tup FROM pg_stat_user_tables WHERE relname='threads') AS total,",
         "json_agg(row_to_json(thread_rows)) as results,",
@@ -48,7 +57,7 @@ ThreadPage.registerFactorySQL({
 });
 
 ThreadPage.registerFactorySQL({
-    name: "listByForum",
+    name: "allByForum",
     sql: [
         "SELECT (SELECT n_live_tup FROM pg_stat_user_tables WHERE relname='threads') AS total,",
         "json_agg(row_to_json(thread_rows)) as results,",
@@ -63,8 +72,8 @@ ThreadPage.registerFactorySQL({
     oneResult: true
 });
 
-Thread.list = ThreadPage.list;
-Thread.listByForum = ThreadPage.listByForum;
+Thread.all = ThreadPage.all;
+Thread.allByForum = ThreadPage.allByForum;
 
 Thread.registerInsert({table: 'threads'});
 Thread.registerUpdate({table: 'threads'});

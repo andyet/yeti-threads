@@ -36,11 +36,20 @@ Post.registerFactorySQL({
     oneResult: true
 });
 
+Post.registerFactorySQL({
+    name: "delete",
+    sql: [
+        "DELETE FROM posts WHERE id=$arg"
+    ].join(' '),
+    oneArg: true,
+    oneResult: true
+});
+
 Post.registerInsert({table: 'posts'});
 Post.registerUpdate({table: 'posts'});
 
 PostPage.registerFactorySQL({
-    name: "list",
+    name: "all",
     sql: [
         "SELECT (SELECT n_live_tup FROM pg_stat_user_tables WHERE relname='posts') AS total,",
         "json_agg(row_to_json(post_rows)) as results,",
@@ -55,6 +64,7 @@ PostPage.registerFactorySQL({
     oneResult: true
 });
 
+/*
 PostPage.registerFactorySQL({
     name: "listByThread",
     sql: [
@@ -70,6 +80,27 @@ PostPage.registerFactorySQL({
     },
     oneResult: true
 });
+*/
+PostPage.registerFactorySQL({
+    name: 'allByThread',
+    sql: [
+"SELECT (SELECT n_live_tup FROM pg_stat_user_tables WHERE relname='posts') AS total,",
+"json_agg(row_to_json(post_rows)) as results,",
+"count(post_rows.*) as count",
+"FROM (WITH RECURSIVE included_posts(id, author, body, parent_id, thread_id, path, created, updated) AS (",
+"    SELECT id, author, body, parent_id, thread_id, path, created, updated FROM threads WHERE parent_id=NULL AND thread_id=$thread_id",
+"UNION ALL",
+"    SELECT p.id, p.author, p.body, p.parent_id, p.thread_id, p.path, p.created, p.updated FROM included_posts inc_p, posts p WHERE p.parent_id=inc_p.id",
+")",
+"SELECT * FROM included_forums ORDER BY path LIMIT $limit OFFSET $offset) post_rows"
+    ].join(' '),
+    defaults: {
+        limit: 20,
+        offset: 0
+    },
+    oneResult: true
+});
 
-Post.list = PostPage.list;
-Post.listByThread = PostPage.listByThread;
+Post.all = PostPage.all;
+Post.allByThread = PostPage.allByThread;
+

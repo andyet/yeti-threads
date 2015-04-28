@@ -1,7 +1,7 @@
 {
     "isDev": true,
     "server": {
-        "port": 8000,
+        "port": 9002,
         "host": "localhost"
     },
     "db": "postgres://fritzy@localhost/forum",
