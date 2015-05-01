@@ -13,6 +13,13 @@ client.connect();
 
 var server;
 
+var gateway = JSON.stringify({
+    client_id: 'foo',
+    user_id: 'tester-user',
+    api: 'yeti-threads-api',
+    scopes: ['admin']
+});
+
 lab.experiment('forums', function () {
     var forum;
     lab.before(function (done) {
@@ -33,6 +40,22 @@ lab.experiment('forums', function () {
             done();
         });
     });
+    lab.before(function (done) {
+        server.inject({
+            method: 'post',
+            url: '/access/tester-user/forum/1',
+            payload: JSON.stringify({
+                write: true,
+                read: true,
+                post: true
+            }),
+            headers: {
+                gateway: gateway
+            }
+        }, function (res) {
+            done();
+        });
+    });
 
     lab.test('can create forum', function (done) {
         server.inject({
@@ -41,9 +64,11 @@ lab.experiment('forums', function () {
             payload: JSON.stringify({
                 name: 'test1',
                 owner: 'bill',
-                description: 'best forum ever 1'
+                description: 'best forum ever 1',
+                parent_id: 1
             }),
             headers: {
+                gateway: gateway
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(201);
@@ -53,11 +78,12 @@ lab.experiment('forums', function () {
             done();
         });
     });
-    lab.test('can list forums', function (done) {
+    lab.test('can get forums', function (done) {
         server.inject({
             method: 'get',
             url: '/forums/' + forum.id,
             headers: {
+                gateway: gateway
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(200);
@@ -76,6 +102,7 @@ lab.experiment('forums', function () {
                 name: 'test2',
             }),
             headers: {
+                gateway: gateway
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(200);
@@ -90,12 +117,13 @@ lab.experiment('forums', function () {
             method: 'get',
             url: '/forums',
             headers: {
+                gateway: gateway
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(200);
             code.expect(res.payload).to.not.equal('');
             var pl = JSON.parse(res.payload);
-            code.expect(pl.count).to.equal(1);
+            code.expect(pl.count).to.equal(2);
             done();
         });
     });
@@ -104,6 +132,7 @@ lab.experiment('forums', function () {
             method: 'delete',
             url: '/forums/' + forum.id,
             headers: {
+                gateway: gateway
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(200);
@@ -122,9 +151,11 @@ lab.experiment('threads', function () {
             payload: JSON.stringify({
                 name: 'test3',
                 owner: 'bill',
-                description: 'best forum ever 1'
+                description: 'best forum ever 1',
+                parent_id: 1
             }),
             headers: {
+                gateway: gateway
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(201);
@@ -199,6 +230,9 @@ lab.experiment('threads', function () {
         server.inject({
             method: 'delete',
             url: '/forums/' + forum.id,
+            headers: {
+                gateway: gateway
+            }
         }, function (res) {
             code.expect(res.statusCode).to.equal(200);
             done();
@@ -217,9 +251,11 @@ lab.experiment('posts', function () {
             payload: JSON.stringify({
                 name: 'test3',
                 owner: 'bill',
-                description: 'best forum ever 1'
+                description: 'best forum ever 1',
+                parent_id: 1
             }),
             headers: {
+                gateway: gateway
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(201);
@@ -377,6 +413,9 @@ lab.experiment('posts', function () {
         server.inject({
             method: 'delete',
             url: '/forums/' + forum.id,
+            headers: {
+                gateway: gateway
+            }
         }, function (res) {
             code.expect(res.statusCode).to.equal(200);
             done();

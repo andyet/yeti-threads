@@ -10,26 +10,7 @@ module.exports = ForumsController;
 
 ForumsController.get = {
     handler: function (request, reply) {
-        models.Forums.getForum(request.params.forum_id, function (err, forum) {
-            err = BoomPg(err, forum, true);
-            if (err) {
-                request.log(['forum', 'get', 'error'], 'problem loading forum: ' + request.params.forum_id);
-                return reply(err);
-            }
-            request.log(['forum', 'get'], 'loaded: ' + request.params.forum_id);
-            return reply(forum.toJSON());
-        });
-    },
-    validate: {
-        params: {
-            forum_id: joi.string()
-        }
-    }
-};
-
-ForumsController.list = {
-    handler: function (request, reply) {
-        models.Forums.all(request.query, function (err, forum) {
+        models.Forums.getForum({forum_id: request.params.forum_id, user_id: request.auth.credentials.user}, function (err, forum) {
             err = BoomPg(err, forum, true);
             if (err) {
                 request.log(['forum', 'get', 'error'], 'problem loading forum: ' + request.params.forum_id);
@@ -39,6 +20,29 @@ ForumsController.list = {
             return reply(forum);
         });
     },
+    auth: 'gateway',
+    validate: {
+        params: {
+            forum_id: joi.string()
+        }
+    }
+};
+
+ForumsController.list = {
+    handler: function (request, reply) {
+        var params = request.query;
+        params.user_id = request.auth.credentials.user;
+        models.Forums.all(params, function (err, forum) {
+            err = BoomPg(err);
+            if (err) {
+                request.log(['forum', 'get', 'error'], 'problem loading forum: ' + request.params.forum_id);
+                return reply(err);
+            }
+            request.log(['forum', 'get'], 'loaded: ' + request.params.forum_id);
+            return reply(forum);
+        });
+    },
+    auth: 'gateway',
     validate: {
         query: {
             offset: joi.number().integer(),
@@ -59,14 +63,15 @@ ForumsController.getTree = {
             return reply(forum.toJSON());
         });
     },
+    auth: 'gateway',
     validate: {
     }
 };
 
 ForumsController.create = {
     handler: function (request, reply) {
-        var forum = models.Forums.create(request.payload);
-        forum.insert(function (err) {
+        var forum = models.Forums.create(request.payload).toJSON();
+        models.Forums.insert(forum, request.auth.credentials.user, function (err) {
             err = BoomPg(err, forum, true);
             if (err) {
                 request.log(['forum', 'get', 'error'], 'problem loading user: ' + request.params.forum_id);
@@ -77,13 +82,16 @@ ForumsController.create = {
         });
 
     },
+    auth: 'gateway',
     validate: {
     }
 };
 
 ForumsController.update = {
     handler: function (request, reply) {
-        models.Forums.update(request.params.forum_id, request.payload, function (err, forum) {
+        var payload = models.Forums.create(request.payload).toJSON();
+        payload.id = request.params.forum_id;
+        models.Forums.update({forum: payload, user_id: request.auth.credentials.user}, function (err, forum) {
             err = BoomPg(err);
             if (err) {
                 request.log(['forum', 'get', 'error'], 'problem loading user: ' + request.params.forum_id);
@@ -94,6 +102,7 @@ ForumsController.update = {
         });
 
     },
+    auth: 'gateway',
     validate: {
     }
 };
@@ -110,6 +119,7 @@ ForumsController.delete = {
             return reply();
         });
     },
+    auth: 'gateway',
     validate: {
         params: {
             forum_id: joi.string()
