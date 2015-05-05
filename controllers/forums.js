@@ -109,6 +109,9 @@ ForumsController.update = {
 
 ForumsController.delete = {
     handler: function (request, reply) {
+        if (request.auth.credentials.scope.indexOf('forum_admin') === -1) {
+            return reply(Boom.unauthorized());
+        }
         models.Forums.delete(request.params.forum_id, function (err) {
             err = BoomPg(err);
             if (err) {

@@ -116,6 +116,9 @@ ThreadsController.update = {
 
 ThreadsController.delete = {
     handler: function (request, reply) {
+        if (request.auth.credentials.scope.indexOf('forum_admin') === -1) {
+            return reply(Boom.unauthorized());
+        }
         models.Thread.delete(request.params.thread_id, function (err) {
             err = BoomPg(err);
             if (err) {

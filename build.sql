@@ -247,11 +247,11 @@ DECLARE
     key TEXT;
     sets TEXT[];
 BEGIN
-    PERFORM check_post_access(user_id, (SELECT threads.forum_id FROM threads WHERE id=(post->>'thread_id')::integer));
+    PERFORM check_post_access(user_id, (SELECT threads.forum_id FROM posts JOIN threads ON threads.id=posts.thread_id WHERE posts.id=(post->>'id')::integer));
     IF EXISTS (SELECT id FROM posts WHERE id=(post->>'id')::integer AND author != user_id) THEN
         RAISE EXCEPTION 'Can not edit post that is not yours';
     END IF;
-    IF EXISTS (SELECT key FROM json_object_keys(post) AS key WHERE key = 'author') THEN
+    IF EXISTS (SELECT key FROM json_object_keys(post) AS tbl WHERE key = 'author' AND post->>key != '[deleted]') THEN
         RAISE EXCEPTION 'cannot change post author';
     END IF;
     EXECUTE generate_update_query(post, 'posts');

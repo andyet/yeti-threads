@@ -439,10 +439,13 @@ lab.experiment('posts', function () {
         });
     });
     
-    lab.after('can delete post', function (done) {
+    lab.test('can delete post', function (done) {
         server.inject({
             method: 'delete',
             url: '/posts/' + post1.id,
+            headers: {
+                gateway: gateway
+            }
         }, function (res) {
             code.expect(res.statusCode).to.equal(200);
             done();

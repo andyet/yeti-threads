@@ -93,7 +93,8 @@ PostsController.create = {
 
 PostsController.update = {
     handler: function (request, reply) {
-        models.Post.update(request.params.post_id, request.payload, function (err, post) {
+        var post = models.Post.create(request.payload);
+        models.Post.update({post: post, user_id: request.auth.credentials.user}, function (err, post) {
             err = BoomPg(err, post, true);
             if (err) {
                 request.log(['post', 'put', 'error'], 'problem updating post');
@@ -103,6 +104,7 @@ PostsController.update = {
             return reply(post);
         });
     },
+    auth: 'gateway',
     validate: {
         params: {
             post_id: joi.number().integer()
@@ -112,7 +114,8 @@ PostsController.update = {
 
 PostsController.delete = {
     handler: function (request, reply) {
-        models.Post.delete(request.params.post_id, function (err) {
+        var post = models.Post.create({id: request.params.post_id, body: '[deleted]', author: '[deleted]'});
+        models.Post.update({post: post, user_id: request.auth.credentials.user}, function (err) {
             err = BoomPg(err);
             if (err) {
                 request.log(['post', 'delete', 'error'], 'problem deleting post: ' + request.params.post_id);
@@ -122,6 +125,7 @@ PostsController.delete = {
             return reply();
         });
     },
+    auth: 'gateway',
     validate: {
         params: {
             post_id: joi.string()
