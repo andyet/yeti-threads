@@ -10,7 +10,7 @@ var PostsController = module.exports = {};
 
 PostsController.get = {
     handler: function (request, reply) {
-        models.Post.get(request.params.post_id, function (err, post) {
+        models.Post.get({post_id: request.params.post_id, user_id: request.auth.credentials.user}, function (err, post) {
             err = BoomPg(err, post, true);
             if (err) {
                 request.log(['post', 'get', 'error'], 'problem loading post: ' + request.params.post_id);
@@ -20,6 +20,7 @@ PostsController.get = {
             return reply(post);
         });
     },
+    auth: 'gateway',
     validate: {
         params: {
             post_id: joi.string()
@@ -29,7 +30,8 @@ PostsController.get = {
 
 PostsController.list = {
     handler: function (request, reply) {
-        models.Post.all(request.query, function (err, result) {
+        var params = lodash.assign(request.query, {user_id: request.auth.credentials.user});
+        models.Post.all(params, function (err, result) {
             err = BoomPg(err);
             if (err) {
                 request.log(['post', 'get', 'error'], 'problem loading posts: ' + request.query);
@@ -38,6 +40,7 @@ PostsController.list = {
             return reply(result);
         });
     },
+    auth: 'gateway',
     validate: {
         query: {
             limit: joi.number().integer(),
@@ -48,7 +51,7 @@ PostsController.list = {
 
 PostsController.listByThread = {
     handler: function (request, reply) {
-        var params = lodash.assign(request.query, request.params);
+        var params = lodash.assign(request.query, request.params, {user_id: request.auth.credentials.user});
         models.Post.allByThread(params, function (err, result) {
             err = BoomPg(err);
             if (err) {
@@ -58,6 +61,7 @@ PostsController.listByThread = {
             return reply(result);
         });
     },
+    auth: 'gateway',
     validate: {
         params: {
             thread_id: joi.string()
@@ -72,7 +76,7 @@ PostsController.listByThread = {
 PostsController.create = {
     handler: function (request, reply) {
         var post = models.Post.create(request.payload);
-        post.insert(function (err) {
+        models.Post.insert(post, request.auth.credentials.user, function (err) {
             err = BoomPg(err);
             if (err) {
                 request.log(['post', 'post', 'error'], 'problem creating post');
@@ -82,6 +86,7 @@ PostsController.create = {
             return reply(post).code(201);
         });
     },
+    auth: 'gateway',
     validate: {
     }
 };

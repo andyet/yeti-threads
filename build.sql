@@ -206,4 +206,32 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+CREATE OR REPLACE FUNCTION create_post(post JSON, user_id TEXT) RETURNS INTEGER as $$
+DECLARE
+    result INTEGER;
+BEGIN
+    PERFORM check_post_access(user_id, (SELECT threads.forum_id FROM threads WHERE id=(post->>'thread_id')::integer));
+    INSERT INTO posts (author, body, parent_id, thread_id) VALUES (user_id, post->>'body', (post->>'parent_id')::integer, (post->>'thread_id')::integer) RETURNING id INTO result;
+    RETURN result;
+END;
+$$ language 'plpgsql';
+
+CREATE OR REPLACE FUNCTION update_post(post JSON, user_id TEXT) RETURNS SETOF posts as $$
+DECLARE
+    key TEXT;
+    sets TEXT[];
+BEGIN
+    PERFORM check_post_access(user_id, (SELECT threads.forum_id FROM threads WHERE id=(post->>'thread_id')::integer));
+    FOR key IN
+        SELECT json_object_keys(post)
+    LOOP
+        IF (key != 'id') THEN
+            SELECT array_append(sets, format('%I=%L', key, post->>key)) INTO sets;
+        END IF;
+    END LOOP;
+    EXECUTE 'UPDATE posts SET ' || array_to_string(sets, ', ') || format(' WHERE id=%L', (post->>'id')::integer);
+    RETURN QUERY SELECT id, body, author, thread_id, parent_id, path, created, updated FROM posts WHERE id=(post->>'id')::integer;
+END;
+$$ language 'plpgsql';
+
 INSERT INTO forums (name) VALUES ('Root Forum');

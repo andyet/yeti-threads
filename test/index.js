@@ -341,6 +341,7 @@ lab.experiment('posts', function () {
                 thread_id: thread.id,
             }),
             headers: {
+                gateway: gateway
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(201);
@@ -362,6 +363,7 @@ lab.experiment('posts', function () {
                 parent_id: post1.id
             }),
             headers: {
+                gateway: gateway
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(201);
@@ -383,6 +385,7 @@ lab.experiment('posts', function () {
                 parent_id: post1.id
             }),
             headers: {
+                gateway: gateway
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(201);
@@ -404,6 +407,7 @@ lab.experiment('posts', function () {
                 parent_id: post2.id
             }),
             headers: {
+                gateway: gateway
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(201);
@@ -419,6 +423,9 @@ lab.experiment('posts', function () {
         server.inject({
             method: 'get',
             url: '/threads/' + thread.id + '/posts',
+            headers: {
+                gateway: gateway
+            }
         }, function (res) {
             code.expect(res.statusCode).to.equal(200);
             code.expect(res.payload).to.not.equal('');
