@@ -10,7 +10,7 @@ var ThreadsController = module.exports = {};
 
 ThreadsController.get = {
     handler: function (request, reply) {
-        models.Thread.get(request.params.thread_id, function (err, thread) {
+        models.Thread.get({thread_id: request.params.thread_id, user_id: request.auth.credentials.user}, function (err, thread) {
             err = BoomPg(err, thread, true);
             if (err) {
                 request.log(['thread', 'get', 'error'], 'problem loading thread: ' + request.params.thread_id);
@@ -20,7 +20,11 @@ ThreadsController.get = {
             return reply(thread);
         });
     },
+    auth: 'gateway',
     validate: {
+        headers: joi.object({
+            gateway: joi.string().required()
+        }).unknown(true).required(true),
         params: {
             thread_id: joi.string()
         }
@@ -29,7 +33,8 @@ ThreadsController.get = {
 
 ThreadsController.list = {
     handler: function (request, reply) {
-        models.Thread.all(request.query, function (err, result) {
+        var params = lodash.assign(request.query, {user_id: request.auth.credentials.user});
+        models.Thread.all(params, function (err, result) {
             err = BoomPg(err);
             if (err) {
                 request.log(['thread', 'get', 'error'], 'problem loading threads: ' + request.query);
@@ -38,6 +43,7 @@ ThreadsController.list = {
             return reply(result);
         });
     },
+    auth: 'gateway',
     validate: {
         query: {
             limit: joi.number().integer(),
@@ -58,6 +64,7 @@ ThreadsController.listByForum = {
             return reply(result);
         });
     },
+    auth: 'gateway',
     validate: {
         params: {
             forum_id: joi.string()
@@ -72,7 +79,7 @@ ThreadsController.listByForum = {
 ThreadsController.create = {
     handler: function (request, reply) {
         var thread = models.Thread.create(request.payload);
-        thread.insert(function (err) {
+        models.Thread.insert(thread, request.auth.credentials.user, function (err) {
             err = BoomPg(err);
             if (err) {
                 request.log(['thread', 'post', 'error'], 'problem creating thread');
@@ -82,6 +89,7 @@ ThreadsController.create = {
             return reply(thread).code(201);
         });
     },
+    auth: 'gateway',
     validate: {
     }
 };
@@ -98,6 +106,7 @@ ThreadsController.update = {
             return reply(thread);
         });
     },
+    auth: 'gateway',
     validate: {
         params: {
             thread_id: joi.number().integer()
@@ -117,6 +126,7 @@ ThreadsController.delete = {
             return reply();
         });
     },
+    auth: 'gateway',
     validate: {
         params: {
             thread_id: joi.string()

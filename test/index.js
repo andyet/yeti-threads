@@ -165,6 +165,22 @@ lab.experiment('threads', function () {
             done();
         });
     });
+    lab.before(function (done) {
+        server.inject({
+            method: 'post',
+            url: '/access/tester-user/forum/' + forum.id,
+            payload: JSON.stringify({
+                write: true,
+                read: true,
+                post: true
+            }),
+            headers: {
+                gateway: gateway
+            }
+        }, function (res) {
+            done();
+        });
+    });
 
     lab.test('can create thread', function (done) {
         server.inject({
@@ -177,6 +193,7 @@ lab.experiment('threads', function () {
                 description: 'best thread ever 1'
             }),
             headers: {
+                gateway: gateway
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(201);
@@ -192,6 +209,9 @@ lab.experiment('threads', function () {
         server.inject({
             method: 'get',
             url: '/threads/' + thread.id,
+            headers: {
+                gateway: gateway
+            }
         }, function (res) {
             code.expect(res.statusCode).to.equal(200);
             code.expect(res.payload).to.not.equal('');
@@ -206,6 +226,9 @@ lab.experiment('threads', function () {
         server.inject({
             method: 'get',
             url: '/threads',
+            headers: {
+                gateway: gateway
+            }
         }, function (res) {
             code.expect(res.statusCode).to.equal(200);
             code.expect(res.payload).to.not.equal('');
@@ -220,6 +243,9 @@ lab.experiment('threads', function () {
         server.inject({
             method: 'delete',
             url: '/threads/' + thread.id,
+            headers: {
+                gateway: gateway
+            }
         }, function (res) {
             code.expect(res.statusCode).to.equal(200);
             done();
@@ -265,8 +291,24 @@ lab.experiment('posts', function () {
             done();
         });
     });
+    lab.before(function (done) {
+        server.inject({
+            method: 'post',
+            url: '/access/tester-user/forum/' + forum.id,
+            payload: JSON.stringify({
+                write: true,
+                read: true,
+                post: true
+            }),
+            headers: {
+                gateway: gateway
+            }
+        }, function (res) {
+            done();
+        });
+    });
 
-    lab.before('can create thread', function (done) {
+    lab.test('can create thread', function (done) {
         server.inject({
             method: 'post',
             url: '/threads',
@@ -277,6 +319,7 @@ lab.experiment('posts', function () {
                 description: 'best thread ever 1'
             }),
             headers: {
+                gateway: gateway
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(201);
@@ -403,6 +446,9 @@ lab.experiment('posts', function () {
         server.inject({
             method: 'delete',
             url: '/threads/' + thread.id,
+            headers: {
+                gateway: gateway
+            }
         }, function (res) {
             code.expect(res.statusCode).to.equal(200);
             done();
