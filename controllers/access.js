@@ -2,11 +2,15 @@ var Access = require('../models/access');
 var BoomPg = require('../../internal-api/controllers/boom_postgres');
 var joi = require('joi');
 var lodash = require('lodash');
+var Boom = require('boom');
 
 var AccessController = module.exports = {};
 
 AccessController.get = {
     handler: function (request, reply) {
+        if (request.auth.credentials.scope.indexOf('forum_admin') === -1) {
+            return reply(Boom.unauthorized());
+        }
         Access.get({forum_id: request.params.forum_id, user_id: request.credentials.user}, function (err, access) {
             err = BoomPg(err, access, true);
             if (err) {
@@ -24,6 +28,9 @@ AccessController.get = {
 
 AccessController.update = {
     handler: function (request, reply) {
+        if (request.auth.credentials.scope.indexOf('forum_admin') === -1) {
+            return reply(Boom.unauthorized());
+        }
         var payload = lodash.assign(request.payload, request.params);
         Access.update(request.payload, function (err) {
             err = BoomPg(err);
@@ -42,6 +49,9 @@ AccessController.update = {
 
 AccessController.create = {
     handler: function (request, reply) {
+        if (request.auth.credentials.scope.indexOf('forum_admin') === -1) {
+            return reply(Boom.unauthorized());
+        }
         var payload = lodash.assign(request.payload, request.params);
         Access.insert(request.payload, function (err) {
             err = BoomPg(err);

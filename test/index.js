@@ -17,7 +17,7 @@ var gateway = JSON.stringify({
     client_id: 'foo',
     user_id: 'tester-user',
     api: 'yeti-threads-api',
-    scopes: ['admin']
+    scopes: ['forum_admin']
 });
 
 lab.experiment('forums', function () {

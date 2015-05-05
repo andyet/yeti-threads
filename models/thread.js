@@ -19,7 +19,11 @@ var Thread = new gatepost.Model({
 Thread.registerFactorySQL({
     name: "get",
     sql: [
-        "SELECT threads.id, threads.forum_id, threads.author, threads.subject, threads.open, threads.locked, threads.tags, threads.created, threads.updated FROM threads JOIN forums ON threads.forum_id=forums.id JOIN forums_access ON forums_access.forum_id=forums.id WHERE threads.id=$thread_id AND forums_access.user_id=$user_id"
+        "SELECT threads.id, threads.forum_id, threads.author, threads.subject, threads.open, threads.locked, threads.tags, threads.created, threads.updated",
+        "FROM threads",
+        "JOIN forums ON threads.forum_id=forums.id",
+        "JOIN forums_access ON forums_access.forum_id=forums.id",
+        "WHERE threads.id=$thread_id AND (forums_access.user_id=$user_id OR forums.owner=$user_id)"
     ].join(' '),
     oneResult: true
 });
@@ -48,7 +52,8 @@ ThreadPage.registerFactorySQL({
         'FROM (SELECT threads.id, threads.forum_id, threads.author, threads.subject, threads.open, threads.locked, threads.tags, threads.created, threads.updated',
         'FROM threads',
         'JOIN forums ON threads.forum_id=forums.id',
-        'JOIN forums_access ON forums.id=forums_access.forum_id AND user_id=$user_id',
+        'JOIN forums_access ON forums.id=forums_access.forum_id',
+        'WHERE user_id=$user_id OR forums.owner=$user_id',
         'ORDER BY threads.id LIMIT $limit OFFSET $offset) thread_rows'
     ].join(' '),
     defaults: {

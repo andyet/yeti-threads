@@ -55,6 +55,22 @@ BEGIN
 END
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION generate_update_query(value JSON, tbl TEXT) RETURNS TEXT as $$
+DECLARE
+    key TEXT;
+    sets TEXT[];
+BEGIN
+    FOR key IN
+        SELECT json_object_keys(value)
+    LOOP
+        IF (key != 'id') THEN
+            SELECT array_append(sets, format('%I=%L', key, value->>key)) INTO sets;
+        END IF;
+    END LOOP;
+    RETURN format('UPDATE %I SET ', tbl) || array_to_string(sets, ', ') || format(' WHERE id=%L', (value->>'id')::integer);
+END;
+$$ language 'plpgsql';
+
 --FORUMS
 CREATE TABLE forums (
     id SERIAL PRIMARY KEY,
@@ -176,7 +192,7 @@ DECLARE
     result INTEGER;
 BEGIN
     IF (json_typeof(thread->'forum_id') IS NOT NULL) THEN
-        PERFORM check_write_access(user_id, (thread->>'forum_id')::integer);
+        PERFORM check_post_access(user_id, (thread->>'forum_id')::integer);
     ELSE
         RAISE EXCEPTION 'forum id required';
     END IF;
@@ -187,22 +203,32 @@ $$ language 'plpgsql';
 
 CREATE OR REPLACE FUNCTION update_forum(forum JSON, user_id TEXT) RETURNS SETOF forums as $$
 DECLARE
-    key TEXT;
-    sets TEXT[];
 BEGIN
-    PERFORM check_write_access(user_id, (forum->>'id')::integer);
-    IF (SELECT json_typeof(forum->'parent_id') IS NOT NULL) THEN
-        PERFORM check_write_access(user_id, (forum->>'parent_id')::integer);
-    END IF;
-    FOR key IN
-        SELECT json_object_keys(forum)
-    LOOP
-        IF (key != 'id') THEN
-            SELECT array_append(sets, format('%I=%L', key, forum->>key)) INTO sets;
+    IF EXISTS (SELECT key FROM json_object_keys(forum) AS key WHERE key='parent_id' AND json_typeof(forum->key) IS NULL) THEN
+        IF (SELECT json_typeof(forum->'parent_id') IS NOT NULL) THEN
+            PERFORM check_write_access(user_id, (forum->>'parent_id')::integer);
+        ELSE
+            RAISE EXCEPTION 'cannot have null parent for forum';
         END IF;
-    END LOOP;
-    EXECUTE 'UPDATE forums SET ' || array_to_string(sets, ', ') || format(' WHERE id=%L', (forum->>'id')::integer);
-    RETURN QUERY SELECT id, owner, name, description, parent_id, path, created, updated FROM forums WHERE id=(forum->>'id')::integer;
+    END IF;
+    PERFORM check_write_access(user_id, (forum->>'id')::integer);
+    EXECUTE generate_update_query(forum, 'forums');
+    RETURN QUERY SELECT * FROM forums WHERE id=(forum->>'id')::integer;
+END;
+$$ language 'plpgsql';
+
+CREATE OR REPLACE FUNCTION update_thread(thread JSON, user_id TEXT) RETURNS SETOF forums as $$
+DECLARE
+BEGIN
+    PERFORM check_post_access(user_id, (thread->>'forum_id')::integer);
+    IF EXISTS (SELECT id FROM threads WHERE id=(thread->>'id')::integer AND author != user_id) THEN
+        RAISE EXCEPTION 'Can not edit thread that is not yours';
+    END IF;
+    IF EXISTS (SELECT key FROM json_object_keys(threads) AS key WHERE key = 'author') THEN
+        RAISE EXCEPTION 'cannot change thread author';
+    END IF;
+    EXECUTE generate_update_query(thread, 'threads');
+    RETURN QUERY SELECT * FROM forums WHERE id=(forum->>'id')::integer;
 END;
 $$ language 'plpgsql';
 
@@ -222,14 +248,13 @@ DECLARE
     sets TEXT[];
 BEGIN
     PERFORM check_post_access(user_id, (SELECT threads.forum_id FROM threads WHERE id=(post->>'thread_id')::integer));
-    FOR key IN
-        SELECT json_object_keys(post)
-    LOOP
-        IF (key != 'id') THEN
-            SELECT array_append(sets, format('%I=%L', key, post->>key)) INTO sets;
-        END IF;
-    END LOOP;
-    EXECUTE 'UPDATE posts SET ' || array_to_string(sets, ', ') || format(' WHERE id=%L', (post->>'id')::integer);
+    IF EXISTS (SELECT id FROM posts WHERE id=(post->>'id')::integer AND author != user_id) THEN
+        RAISE EXCEPTION 'Can not edit post that is not yours';
+    END IF;
+    IF EXISTS (SELECT key FROM json_object_keys(post) AS key WHERE key = 'author') THEN
+        RAISE EXCEPTION 'cannot change post author';
+    END IF;
+    EXECUTE generate_update_query(post, 'posts');
     RETURN QUERY SELECT id, body, author, thread_id, parent_id, path, created, updated FROM posts WHERE id=(post->>'id')::integer;
 END;
 $$ language 'plpgsql';
