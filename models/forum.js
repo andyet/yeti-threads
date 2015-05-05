@@ -1,15 +1,28 @@
 var gatepost = require('gatepost');
 
 var Forum = new gatepost.Model({
-    id: {type: 'integer', primary: true},
-    owner: {type: 'string'},
-    name: {},
-    description: {},
-    parent_id: {},
-    path: {},
+    id: {
+        validate: joi.number().integer(),
+        primary: true
+    },
+    owner: {
+        validate: joi.string()
+    },
+    name: {
+        validate: joi.string().max(30)
+    },
+    description: {
+        validate: joi.string().max(200)
+    },
+    parent_id: {
+        validate: joi.number().integer()
+    },
+    path: {
+        validate: joi.string().max(255)
+    },
     forums: {collection: 'this'},
-    created: {type: 'datetime'},
-    updated: {type: 'datetime'}
+    created: {validate: joi.date()},
+    updated: {vadliate: joi.date()}
 },
 {
     cache: true,

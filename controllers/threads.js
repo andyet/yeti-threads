@@ -22,9 +22,6 @@ ThreadsController.get = {
     },
     auth: 'gateway',
     validate: {
-        headers: joi.object({
-            gateway: joi.string().required()
-        }).unknown(true).required(true),
         params: {
             thread_id: joi.string()
         }

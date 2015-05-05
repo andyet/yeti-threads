@@ -9,7 +9,7 @@
   "author": "Nathan Fritz",
   "license": "MIT",
   "dependencies": {
-    "gatepost": "^2.0.1",
+    "gatepost": "^2.1.0",
     "archy": "^1.0.0",
     "joi": "^6.3.0",
     "getconfig": "^2.1.0",
@@ -23,6 +23,7 @@
     "lab": "^5.8.0",
     "cod": "^0.4.3",
     "code": "^1.4.0",
-    "boom": "^2.7.1"
+    "boom": "^2.7.1",
+    "verymodel": "^2.1.0"
   }
 }
