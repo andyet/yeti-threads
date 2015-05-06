@@ -1,11 +1,23 @@
 var gatepost = require('gatepost');
+var joi = require('joi');
 
 var Post = new gatepost.Model({
-    id: {type: 'integer', primary: true},
-    author: {type: 'string'},
-    body: {type: 'string'},
-    parent_id: {type: 'integer'},
-    thread_id: {type: 'integer'},
+    id: {
+        validate: joi.number().integer(),
+        primary: true
+    },
+    author: {
+        validate: joi.string().max(50)
+    },
+    body: {
+        validate: joi.string()
+    },
+    parent_id: {
+        validate: joi.number().integer()
+    },
+    thread_id: {
+        validate: joi.number().integer()
+    },
     path: {
         processIn: function (value) {
             if (!value) {
@@ -18,10 +30,15 @@ var Post = new gatepost.Model({
                 return '';
             }
             return value.join('.');
-        }
+        },
+        validate: joi.string().max(255)
     },
-    created: {type: 'date'},
-    updated: {type: 'date'}
+    created: {
+        validate: joi.date()
+    },
+    updated: {
+        validate: joi.date()
+    }
 }, {
     name: 'post',
     cach: true

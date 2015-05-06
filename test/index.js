@@ -186,9 +186,7 @@ lab.experiment('threads', function () {
             url: '/threads',
             payload: JSON.stringify({
                 subject: 'test thread 1',
-                author: 'bill',
                 forum_id: forum.id,
-                description: 'best thread ever 1'
             }),
             headers: {
                 gateway: gateway
@@ -311,9 +309,7 @@ lab.experiment('posts', function () {
             url: '/threads',
             payload: JSON.stringify({
                 subject: 'test thread 1',
-                author: 'bill',
                 forum_id: forum.id,
-                description: 'best thread ever 1'
             }),
             headers: {
                 gateway: gateway
@@ -334,7 +330,6 @@ lab.experiment('posts', function () {
             url: '/posts',
             payload: JSON.stringify({
                 body: 'test post 1',
-                author: 'bill',
                 thread_id: thread.id,
             }),
             headers: {
@@ -355,7 +350,6 @@ lab.experiment('posts', function () {
             url: '/posts',
             payload: JSON.stringify({
                 body: 'test post 2',
-                author: 'bill',
                 thread_id: thread.id,
                 parent_id: post1.id
             }),
@@ -377,7 +371,6 @@ lab.experiment('posts', function () {
             url: '/posts',
             payload: JSON.stringify({
                 body: 'test post 3',
-                author: 'bill',
                 thread_id: thread.id,
                 parent_id: post1.id
             }),
@@ -399,7 +392,6 @@ lab.experiment('posts', function () {
             url: '/posts',
             payload: JSON.stringify({
                 body: 'test post 4',
-                author: 'bill',
                 thread_id: thread.id,
                 parent_id: post2.id
             }),

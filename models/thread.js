@@ -1,15 +1,39 @@
 var gatepost = require('gatepost');
+var joi = require('joi');
 
 var Thread = new gatepost.Model({
-    id: {type: 'integer', primary: true},
-    forum_id: {type: 'integer', required: true},
-    author: {type: 'string'},
-    subject: {type: 'string', required: true},
-    open: {type: 'boolean', required: true, default: true},
-    locked: {type: 'boolean', required: true, default:false},
-    tags: {type: 'array'},
-    create: {type: 'date'},
-    updated: {type: 'date'}
+    id: {
+        primary: true,
+        validate: joi.number().integer()
+    },
+    forum_id: {
+        validate: joi.number().integer()
+    },
+    author: {
+        validate: joi.string().max(50)
+    },
+    subject: {
+        validate: joi.string().max(200)
+    },
+    open: {
+        validate: joi.boolean(),
+        required: true,
+        default: true
+    },
+    locked: {
+        validate: joi.boolean(),
+        required: true,
+        default:false
+    },
+    tags: {
+        validate: joi.array().items(joi.string().max(50)).max(50)
+    },
+    create: {
+        validate: joi.date()
+    },
+    updated: {
+        validate: joi.date()
+    }
 },
 {
     name: 'thread',

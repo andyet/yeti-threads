@@ -191,11 +191,6 @@ CREATE OR REPLACE FUNCTION create_thread(thread JSON, user_id TEXT) RETURNS INTE
 DECLARE
     result INTEGER;
 BEGIN
-    IF (json_typeof(thread->'forum_id') IS NOT NULL) THEN
-        PERFORM check_post_access(user_id, (thread->>'forum_id')::integer);
-    ELSE
-        RAISE EXCEPTION 'forum id required';
-    END IF;
     INSERT INTO threads (forum_id, author, subject, open, locked, tags) VALUES ((thread->>'forum_id')::integer, user_id, thread->>'subject', (thread->>'open')::boolean, (thread->>'locked')::boolean, (select array_agg(x) as tags FROM json_array_elements_text(thread->'tags') AS x)) RETURNING id INTO result;
     RETURN result;
 END;
