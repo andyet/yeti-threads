@@ -38,7 +38,7 @@ var ForumTree = new gatepost.Model({
 
 ForumTree.registerFactorySQL({
     name: "get",
-    sql: "select array_to_json(ARRAY(select array_to_json(array_agg(json_build_object(f2.id, f2.name))) as results from forums f1 join forums f2 ON f2.id::text=ANY(string_to_array(f1.path::text, '.')) GROUP BY f1.path)) as results"
+    sql: "select array_to_json(ARRAY(select array_to_json(array_agg(json_build_object(f2.id, f2.name))) as results from forums f1 join forums f2 ON f2.id::text=ANY(string_to_array(f1.path::text, '.')) GROUP BY f1.path)) as results",
     oneResult: true
 });
 
