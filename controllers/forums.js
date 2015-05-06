@@ -84,7 +84,7 @@ ForumsController.create = {
     },
     auth: 'gateway',
     validate: {
-        payload: models.Forums.exportJoi(['owner', 'name','description', 'parent_id'])
+        payload: models.Forums.exportJoi(['name', 'description', 'parent_id']).requiredKeys(['name'])
     }
 };
 
@@ -105,6 +105,7 @@ ForumsController.update = {
     },
     auth: 'gateway',
     validate: {
+        payload: models.Forums.exportJoi(['owner', 'name', 'description', 'parent_id'])
     }
 };
 

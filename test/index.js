@@ -63,7 +63,6 @@ lab.experiment('forums', function () {
             url: '/forums',
             payload: JSON.stringify({
                 name: 'test1',
-                owner: 'bill',
                 description: 'best forum ever 1',
                 parent_id: 1
             }),
@@ -150,7 +149,6 @@ lab.experiment('threads', function () {
             url: '/forums',
             payload: JSON.stringify({
                 name: 'test3',
-                owner: 'bill',
                 description: 'best forum ever 1',
                 parent_id: 1
             }),
@@ -276,7 +274,6 @@ lab.experiment('posts', function () {
             url: '/forums',
             payload: JSON.stringify({
                 name: 'test3',
-                owner: 'bill',
                 description: 'best forum ever 1',
                 parent_id: 1
             }),

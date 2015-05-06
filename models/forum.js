@@ -1,4 +1,5 @@
 var gatepost = require('gatepost');
+var joi = require('joi');
 
 var Forum = new gatepost.Model({
     id: {
@@ -22,7 +23,7 @@ var Forum = new gatepost.Model({
     },
     forums: {collection: 'this'},
     created: {validate: joi.date()},
-    updated: {vadliate: joi.date()}
+    updated: {validate: joi.date()}
 },
 {
     cache: true,
