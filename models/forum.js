@@ -1,5 +1,6 @@
 var gatepost = require('gatepost');
 var joi = require('joi');
+var knex = require('knex')({dialect: 'pg'});
 
 var Forum = new gatepost.Model({
     id: {
@@ -37,9 +38,7 @@ var ForumTree = new gatepost.Model({
 
 ForumTree.registerFactorySQL({
     name: "get",
-    sql: [
-        "select array_to_json(ARRAY(select array_to_json(array_agg(json_build_object(f2.id, f2.name))) as results from forums f1 join forums f2 ON f2.id::text=ANY(string_to_array(f1.path::text, '.')) GROUP BY f1.path)) as results"
-    ].join(' '),
+    sql: "select array_to_json(ARRAY(select array_to_json(array_agg(json_build_object(f2.id, f2.name))) as results from forums f1 join forums f2 ON f2.id::text=ANY(string_to_array(f1.path::text, '.')) GROUP BY f1.path)) as results"
     oneResult: true
 });
 
@@ -47,10 +46,13 @@ Forum.getTree = ForumTree.get;
 
 Forum.registerFactorySQL({
     name: 'get',
-    sql: [
-        'SELECT id, owner, name, description, parent_id, path, created, updated',
-        'FROM forums JOIN forums_access ON forums_access.forum_id=forums.id WHERE id=$forum_id AND forums_access.user=$user_id'
-    ].join(' '),
+//'SELECT id, owner, name, description, parent_id, path, created, updated',
+//'FROM forums JOIN forums_access ON forums_access.forum_id=forums.id WHERE id=$forum_id AND forums_access.user=$user_id'
+    sql: knex.select('id', 'owner', 'name', 'description', 'parent_id', 'path', 'created', 'updated')
+        .from('forums')
+        .rightJoin('forums_access', 'forums.id', 'forums_access.forum_id')
+        .whereRaw('id = $forum_id')
+        .whereRaw('forums_access.user = $user_id').toString(),
     oneResult: true
 });
 
