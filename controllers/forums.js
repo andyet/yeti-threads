@@ -72,13 +72,8 @@ ForumsController.create = {
     handler: function (request, reply) {
         var forum = models.Forums.create(request.payload).toJSON();
         models.Forums.insert(forum, request.auth.credentials.user, function (err) {
-            err = BoomPg(err, forum, true);
-            if (err) {
-                request.log(['forum', 'get', 'error'], 'problem loading user: ' + request.params.forum_id);
-                return reply(err);
-            }
             request.log(['forum', 'get'], 'loaded: ' + request.params.forum_id);
-            return reply(forum).code(201);
+            return reply(BoomPg(err, forum, true), forum).code(201);
         });
 
     },
