@@ -46,15 +46,6 @@ END
 $$
 LANGUAGE 'plpgsql' VOLATILE;
 
-CREATE OR REPLACE FUNCTION triggered_check_permissions() RETURNS TRIGGER AS $$
-DECLARE
-BEGIN
-    IF NOT EXISTS (SELECT write FROM forums_access WHERE (forum_id=OLD.forum_id OR forum_id=NEW.forum_id) AND forums_access.user_id=NEW.user_id AND write=True) THEN
-        RAISE EXCEPTION 'no_write_access';
-    END IF;
-END
-$$ LANGUAGE plpgsql;
-
 CREATE OR REPLACE FUNCTION generate_update_query(value JSON, tbl TEXT) RETURNS TEXT as $$
 DECLARE
     key TEXT;
@@ -147,7 +138,7 @@ CREATE OR REPLACE FUNCTION check_read_access(userid TEXT, f_id INTEGER) RETURNS 
 BEGIN
     IF NOT EXISTS (SELECT * FROM forums_access WHERE user_id=userid AND forum_id=f_id AND read=TRUE) THEN
         IF NOT EXISTS (SELECT id FROM forums WHERE owner=userid AND id=f_id) THEN
-            RAISE EXCEPTION 'read_not_allowed';
+            RAISE 'User lacks permission to read from forum: %', f_id USING ERRCODE = 'insufficient_privilege' ;
         END IF;
     END IF;
 END;
@@ -157,7 +148,7 @@ CREATE OR REPLACE FUNCTION check_write_access(userid TEXT, f_id INTEGER) RETURNS
 BEGIN
     IF NOT EXISTS (SELECT * FROM forums_access WHERE user_id=userid AND forum_id=f_id AND write=TRUE) THEN
         IF NOT EXISTS (SELECT id FROM forums WHERE owner=userid AND id=f_id) THEN
-            RAISE EXCEPTION 'write_not_allowed';
+            RAISE 'User lacks permission to write to forum: %', f_id USING ERRCODE = 'insufficient_privilege' ;
         END IF;
     END IF;
 END;
@@ -167,7 +158,7 @@ CREATE OR REPLACE FUNCTION check_post_access(userid TEXT, f_id INTEGER) RETURNS 
 BEGIN
     IF NOT EXISTS (SELECT * FROM forums_access WHERE user_id=userid AND forum_id=f_id AND post=TRUE) THEN
         IF NOT EXISTS (SELECT id FROM forums WHERE owner=userid AND id=f_id) THEN
-            RAISE EXCEPTION 'post_not_allowed';
+            RAISE 'User lacks permission to post to forum: %', f_id USING ERRCODE = 'insufficient_privilege' ;
         END IF;
     END IF;
 END;

@@ -26,6 +26,12 @@ var plugins = [
         register: require('./'),
         options: {}
     },
+    {
+        register: require('pgboom'), 
+        options: {
+            getNull404: true
+        }
+    }
 ];
 
 

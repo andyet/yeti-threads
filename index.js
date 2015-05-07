@@ -7,6 +7,7 @@ exports.register = function (plugin, options, done) {
     var server = plugin;
 
     plugin.bind({
+
     });
 
     //forum

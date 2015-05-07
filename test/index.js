@@ -33,6 +33,10 @@ lab.experiment('forums', function () {
             {
                 register: require('../'),
             },
+            {
+                register: require('pgboom'),
+                options: { getNull404: true }
+            }
         ], function (err) {
             if (err) {
                 throw err;
@@ -108,6 +112,38 @@ lab.experiment('forums', function () {
             code.expect(res.payload).to.not.equal('');
             var pl = JSON.parse(res.payload);
             code.expect(pl.name).to.equal('test2');
+            done();
+        });
+    });
+    lab.test("can't update forum with unauthed user", function (done) {
+        server.inject({
+            method: 'put',
+            url: '/forums/' + forum.id,
+            payload: JSON.stringify({
+                name: 'test2',
+            }),
+            headers: {
+                gateway: JSON.stringify({
+                    client_id: 'foo',
+                    user_id: 'derpina',
+                    api: 'yeti-threads-api',
+                    scopes: ['forum_admin']
+                })
+            }
+        }, function (res) {
+            code.expect(res.statusCode).to.equal(403);
+            done();
+        });
+    });
+    lab.test("get 404 on bad id", function (done) {
+        server.inject({
+            method: 'get',
+            url: '/forums/' + -32,
+            headers: {
+                gateway: gateway
+            }
+        }, function (res) {
+            code.expect(res.statusCode).to.equal(404);
             done();
         });
     });
@@ -200,7 +236,7 @@ lab.experiment('threads', function () {
             done();
         });
     });
-    
+
     lab.test('can get thread', function (done) {
         server.inject({
             method: 'get',
@@ -234,7 +270,7 @@ lab.experiment('threads', function () {
             done();
         });
     });
-    
+
     lab.test('can delete thread', function (done) {
         server.inject({
             method: 'delete',
@@ -427,7 +463,7 @@ lab.experiment('posts', function () {
             done();
         });
     });
-    
+
     lab.test('can delete post', function (done) {
         server.inject({
             method: 'delete',
