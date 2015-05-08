@@ -36,7 +36,7 @@ var ForumTree = new gatepost.Model({
     results: {type: 'array'}
 });
 
-ForumTree.registerFactorySQL({
+ForumTree.fromSQL({
     name: "get",
     sql: "select array_to_json(ARRAY(select array_to_json(array_agg(json_build_object(f2.id, f2.name))) as results from forums f1 join forums f2 ON f2.id::text=ANY(string_to_array(f1.path::text, '.')) GROUP BY f1.path)) as results",
     oneResult: true
@@ -58,7 +58,7 @@ var IdArray = new gatepost.Model({
     }
 });
 
-IdArray.registerFactorySQL({
+IdArray.fromSQL({
     name: "getIds",
     sql: "SELECT json_agg(forums.id) AS ids FROM forums JOIN forums_access ON forums.id=forums_access.forum_id WHERE (forums_access.user_id=$arg AND forums_access.read=True) OR forums.owner=$arg",
     oneArg: true,
@@ -67,7 +67,7 @@ IdArray.registerFactorySQL({
 
 Forum.getIds = IdArray.getIds;
 
-Forum.registerFactorySQL({
+Forum.fromSQL({
     name: 'get',
     sql: knex.select('id', 'owner', 'name', 'description', 'parent_id', 'path', 'created', 'updated')
         .from('forums')
@@ -89,15 +89,17 @@ Forum.insert = function (forum, user, callback) {
     });
 };
 
-Forum.registerFactorySQL({
+Forum.fromSQL({
     name: 'update',
     sql: [
         'SELECT * from update_forum($forum, $user_id)'
     ].join(' '),
-    oneResult: true
+    oneResult: true,
+    instance: true,
+    asJSON: true
 });
 
-Forum.registerFactorySQL({
+Forum.fromSQL({
     name: 'getForum',
     sql: [
         "SELECT id, owner, name, description, created, updated, path, (SELECT json_agg(row_to_json(f_rows)) as forums",
@@ -110,7 +112,7 @@ Forum.registerFactorySQL({
     oneResult: true
 });
 
-Forum.registerFactorySQL({
+Forum.fromSQL({
     name: 'delete',
     sql: "DELETE FROM forums WHERE id=$arg",
     oneArg: true,
@@ -123,7 +125,7 @@ var ForumPage = new gatepost.Model({
     total: {type: 'integer'}
 });
 
-ForumPage.registerFactorySQL({
+ForumPage.fromSQL({
     name: "all",
     sql: [
         "SELECT (SELECT n_live_tup FROM pg_stat_user_tables WHERE relname='forums') AS total,",

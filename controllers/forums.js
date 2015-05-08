@@ -53,9 +53,9 @@ module.exports = {
 
     update: {
         handler: function (request, reply) {
-            var payload = Forum.create(request.payload).toJSON();
-            payload.id = request.params.forum_id;
-            Forum.update({forum: payload, user_id: request.auth.credentials.user}, reply);
+            var forum = Forum.create(request.payload);
+            forum.id = request.params.forum_id;
+            forum.update({user_id: request.auth.credentials.user}, reply);
         },
         auth: 'gateway',
         validate: {
