@@ -8,6 +8,8 @@ server.connection(config.server);
 var client = new pg.Client(config.db);
 gatepost.registerPG(client);
 
+var events = require('./events')(client, server);
+
 var plugins = [
     {
         register: require('platform-gateway-auth'),

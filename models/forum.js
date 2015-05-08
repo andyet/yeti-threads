@@ -44,10 +44,31 @@ ForumTree.registerFactorySQL({
 
 Forum.getTree = ForumTree.get;
 
+var IdArray = new gatepost.Model({
+    ids: {
+        validate: joi.array(),
+        default: function () { return []; },
+        processIn: function (value) {
+            if (value === null || !value) {
+                return [];
+            }
+            return value;
+        },
+        required: true
+    }
+});
+
+IdArray.registerFactorySQL({
+    name: "getIds",
+    sql: "SELECT json_agg(forums.id) AS ids FROM forums JOIN forums_access ON forums.id=forums_access.forum_id WHERE (forums_access.user_id=$arg AND forums_access.read=True) OR forums.owner=$arg",
+    oneArg: true,
+    oneResult: true
+});
+
+Forum.getIds = IdArray.getIds;
+
 Forum.registerFactorySQL({
     name: 'get',
-//'SELECT id, owner, name, description, parent_id, path, created, updated',
-//'FROM forums JOIN forums_access ON forums_access.forum_id=forums.id WHERE id=$forum_id AND forums_access.user=$user_id'
     sql: knex.select('id', 'owner', 'name', 'description', 'parent_id', 'path', 'created', 'updated')
         .from('forums')
         .rightJoin('forums_access', 'forums.id', 'forums_access.forum_id')

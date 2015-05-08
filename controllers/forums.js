@@ -68,12 +68,12 @@ module.exports = {
 
     delete: {
         handler: function (request, reply) {
-            if (request.auth.credentials.scope.indexOf('forum_admin') === -1) {
-                throw Boom.unauthorized();
-            }
             Forum.delete(request.params.forum_id, reply);
         },
-        auth: 'gateway',
+        auth: {
+            scope: 'forum_admin',
+            strategy: 'gateway'
+        },
         validate: {
             params: {
                 forum_id: joi.number().integer()

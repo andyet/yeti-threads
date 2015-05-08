@@ -10,6 +10,10 @@ var code = require('code');
 var client = new pg.Client(config.db);
 gatepost.registerPG(client);
 client.connect();
+client.query("LISTEN forums_log");
+
+client.on('notification', function (msg) {
+});
 
 var server;
 

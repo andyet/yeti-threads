@@ -62,6 +62,51 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+CREATE OR REPLACE FUNCTION log_forums_change() RETURNS trigger AS $$
+DECLARE
+  id bigint;
+BEGIN
+  IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
+    id = NEW.id;
+    IF TG_OP = 'INSERT' AND NEW.owner IS NOT NULL THEN
+        INSERT INTO forums_access (user_id, forum_id, read, write, post) VALUES (NEW.owner, NEW.id, True, True, True);
+    END IF;
+  ELSE
+    id = OLD.id;
+  END IF;
+  INSERT INTO forums_log (forum_id, tbl, op) VALUES (id, TG_TABLE_NAME, TG_OP);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION notify_forums_log() RETURNS trigger AS $$
+DECLARE
+    url_path TEXT;
+BEGIN
+    IF NEW.tbl = 'forums' THEN
+        url_path = '/forums/' || NEW.forum_id::text;
+    ELSE
+        url_path = '/' || NEW.tbl || '/' || NEW.other_id::text;
+    END IF;
+    PERFORM pg_notify('forums_log', json_build_object('forum_id', NEW.forum_id, 'url_path', url_path, 'table', NEW.tbl, 'other_id', NEW.other_id, 'type', NEW.op, 'when', NEW.time)::text);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION notify_access_log() RETURNS trigger AS $$
+DECLARE
+    url_path TEXT;
+BEGIN
+    IF TG_OP = 'DELETE' THEN
+        PERFORM pg_notify('access_log', json_build_object('user_id', OLD.user_id, 'forum_id', OLD.forum_id, 'access', False)::text);
+        RETURN OLD;
+    ELSE 
+        PERFORM pg_notify('access_log', json_build_object('user_id', NEW.user_id, 'forum_id', NEW.forum_id, 'access', NEW.read)::text);
+        RETURN NEW;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
 --FORUMS
 CREATE TABLE forums (
     id SERIAL PRIMARY KEY,
@@ -78,8 +123,9 @@ CREATE INDEX idx_forums_path on forums USING GIST (path);
 CREATE INDEX idx_forums_owner on forums(owner);
 CREATE INDEX idx_forums_name on forums(name);
 
-CREATE TRIGGER trigger_update_forum_path AFTER INSERT OR UPDATE OF id, parent_id ON forums FOR EACH ROW EXECUTE PROCEDURE triggered_update_path();
-CREATE TRIGGER update_forums_updated BEFORE UPDATE ON forums FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
+CREATE TRIGGER trigger_forums_path AFTER INSERT OR UPDATE OF id, parent_id ON forums FOR EACH ROW EXECUTE PROCEDURE triggered_update_path();
+CREATE TRIGGER trigger_forums_updated BEFORE UPDATE ON forums FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
+CREATE TRIGGER trigger_forums_changes AFTER DELETE OR UPDATE OR INSERT ON forums FOR EACH ROW EXECUTE PROCEDURE log_forums_change();
 
 CREATE TABLE threads (
     id SERIAL PRIMARY KEY,
@@ -133,6 +179,25 @@ CREATE TABLE forums_access (
     post BOOLEAN DEFAULT FALSE,
     PRIMARY KEY (user_id, forum_id)
 );
+CREATE TRIGGER trigger_forums_access_notify AFTER INSERT OR UPDATE OR DELETE ON forums_access FOR EACH ROW EXECUTE PROCEDURE notify_access_log();
+
+CREATE TABLE posts_read (
+    user_id TEXT,
+    post_id INTEGER REFERENCES posts(id) ON DELETE CASCADE,
+    read BOOLEAN NOT NULL DEFAULT False,
+    PRIMARY KEY (user_id, post_id)
+);
+
+CREATE TABLE forums_log (
+    forum_id INTEGER,
+    tbl TEXT,
+    other_id INTEGER,
+    op TEXT,
+    time TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_forums_log_time ON forums_log(time);
+CREATE TRIGGER trigger_forums_log_notify AFTER INSERT ON forums_log FOR EACH ROW EXECUTE PROCEDURE notify_forums_log();
 
 CREATE OR REPLACE FUNCTION check_read_access(userid TEXT, f_id INTEGER) RETURNS void AS $$
 BEGIN
@@ -148,7 +213,7 @@ CREATE OR REPLACE FUNCTION check_write_access(userid TEXT, f_id INTEGER) RETURNS
 BEGIN
     IF NOT EXISTS (SELECT * FROM forums_access WHERE user_id=userid AND forum_id=f_id AND write=TRUE) THEN
         IF NOT EXISTS (SELECT id FROM forums WHERE owner=userid AND id=f_id) THEN
-            RAISE 'User lacks permission to write to forum: %', f_id USING ERRCODE = 'insufficient_privilege' ;
+            RAISE 'User lacks permission to write to forum: %', f_id USING ERRCODE = 'insufficient_privilege';
         END IF;
     END IF;
 END;
@@ -178,15 +243,6 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-CREATE OR REPLACE FUNCTION create_thread(thread JSON, user_id TEXT) RETURNS INTEGER as $$
-DECLARE
-    result INTEGER;
-BEGIN
-    INSERT INTO threads (forum_id, author, subject, open, locked, tags) VALUES ((thread->>'forum_id')::integer, user_id, thread->>'subject', (thread->>'open')::boolean, (thread->>'locked')::boolean, (select array_agg(x) as tags FROM json_array_elements_text(thread->'tags') AS x)) RETURNING id INTO result;
-    RETURN result;
-END;
-$$ language 'plpgsql';
-
 CREATE OR REPLACE FUNCTION update_forum(forum JSON, user_id TEXT) RETURNS SETOF forums as $$
 DECLARE
 BEGIN
@@ -203,6 +259,17 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+CREATE OR REPLACE FUNCTION create_thread(thread JSON, user_id TEXT) RETURNS INTEGER as $$
+DECLARE
+    result INTEGER;
+BEGIN
+    PERFORM check_post_access(user_id, (thread->>'forum_id')::integer);
+    INSERT INTO threads (forum_id, author, subject, open, locked, tags) VALUES ((thread->>'forum_id')::integer, user_id, thread->>'subject', (thread->>'open')::boolean, (thread->>'locked')::boolean, (select array_agg(x) as tags FROM json_array_elements_text(thread->'tags') AS x)) RETURNING id INTO result;
+    INSERT INTO forums_log (forum_id, tbl, other_id, op) VALUES ((thread->>'forum_id')::integer, 'threads', result, 'INSERT');
+    RETURN result;
+END;
+$$ language 'plpgsql';
+
 CREATE OR REPLACE FUNCTION update_thread(thread JSON, user_id TEXT) RETURNS SETOF forums as $$
 DECLARE
 BEGIN
@@ -214,6 +281,7 @@ BEGIN
         RAISE EXCEPTION 'cannot change thread author';
     END IF;
     EXECUTE generate_update_query(thread, 'threads');
+    INSERT INTO forums_log (forum_id, tbl, other_id, op) VALUES ((thread->>'forum_id')::integer, 'threads', (thread->>'id')::integer, 'UPDATE');
     RETURN QUERY SELECT * FROM forums WHERE id=(forum->>'id')::integer;
 END;
 $$ language 'plpgsql';
@@ -221,9 +289,12 @@ $$ language 'plpgsql';
 CREATE OR REPLACE FUNCTION create_post(post JSON, user_id TEXT) RETURNS INTEGER as $$
 DECLARE
     result INTEGER;
+    f_id INTEGER;
 BEGIN
-    PERFORM check_post_access(user_id, (SELECT threads.forum_id FROM threads WHERE id=(post->>'thread_id')::integer));
+    SELECT threads.forum_id FROM threads WHERE id=(post->>'thread_id')::integer INTO f_id;
+    PERFORM check_post_access(user_id, f_id);
     INSERT INTO posts (author, body, parent_id, thread_id) VALUES (user_id, post->>'body', (post->>'parent_id')::integer, (post->>'thread_id')::integer) RETURNING id INTO result;
+    INSERT INTO forums_log (forum_id, tbl, other_id, op) VALUES (f_id, 'posts', result, 'INSERT');
     RETURN result;
 END;
 $$ language 'plpgsql';
@@ -232,15 +303,15 @@ CREATE OR REPLACE FUNCTION update_post(post JSON, user_id TEXT) RETURNS SETOF po
 DECLARE
     key TEXT;
     sets TEXT[];
+    f_id INTEGER;
 BEGIN
-    PERFORM check_post_access(user_id, (SELECT threads.forum_id FROM posts JOIN threads ON threads.id=posts.thread_id WHERE posts.id=(post->>'id')::integer));
+    SELECT threads.forum_id FROM posts JOIN threads ON threads.id=posts.thread_id WHERE posts.id=(post->>'id')::integer INTO f_id;
+    PERFORM check_post_access(user_id, f_id);
     IF EXISTS (SELECT id FROM posts WHERE id=(post->>'id')::integer AND author != user_id) THEN
         RAISE EXCEPTION 'Can not edit post that is not yours';
     END IF;
-    IF EXISTS (SELECT key FROM json_object_keys(post) AS tbl WHERE key = 'author' AND post->>key != '[deleted]') THEN
-        RAISE EXCEPTION 'cannot change post author';
-    END IF;
     EXECUTE generate_update_query(post, 'posts');
+    INSERT INTO forums_log (forum_id, tbl, other_id, op) VALUES (f_id, 'posts', (post->>'id')::integer, 'UPDATE');
     RETURN QUERY SELECT id, body, author, thread_id, parent_id, path, created, updated FROM posts WHERE id=(post->>'id')::integer;
 END;
 $$ language 'plpgsql';
