@@ -6,41 +6,55 @@ var Boom = require('boom');
 module.exports = {
     get: {
         handler: function (request, reply) {
-            if (request.auth.credentials.scope.indexOf('forum_admin') === -1) {
-                return reply(Boom.unauthorized());
-            }
-            Access.get({forum_id: request.params.forum_id, user_id: request.credentials.user}, reply);
+            Access.get({forum_id: request.params.forum_id, user_id: request.params.user_id}, reply);
         },
-        auth: 'gateway',
+        auth: {
+            strategy: 'gateway',
+            scope: 'forum_admin'
+        },
         validate: {
+            params: {
+                forum_id: joi.number().integer().required(),
+                user_id: joi.string().required()
+            }
         }
     },
 
     update: {
         handler: function (request, reply) {
-            if (request.auth.credentials.scope.indexOf('forum_admin') === -1) {
-                return reply(Boom.unauthorized());
-            }
             var payload = lodash.assign(request.payload, request.params);
             Access.update(request.payload, reply);
         },
-        auth: 'gateway',
+        auth: {
+            strategy: 'gateway',
+            scope: 'forum_admin'
+        },
         validate: {
+            params: {
+                forum_id: joi.number().integer().required(),
+                user_id: joi.string().required()
+            },
+            payload: Access.exportJoi(['read', 'write', 'post'])
         }
     },
 
     create: {
         handler: function (request, reply) {
-            if (request.auth.credentials.scope.indexOf('forum_admin') === -1) {
-                return reply(Boom.unauthorized());
-            }
             var payload = lodash.assign(request.payload, request.params);
             Access.insert(request.payload, function (err) {
                 return reply(err).code(201);
             });
         },
-        auth: 'gateway',
+        auth: {
+            strategy: 'gateway',
+            scope: 'forum_admin'
+        },
         validate: {
+            params: {
+                forum_id: joi.number().integer().required(),
+                user_id: joi.string().required()
+            },
+            payload: Access.exportJoi(['read', 'write', 'post'])
         }
     }
 }
