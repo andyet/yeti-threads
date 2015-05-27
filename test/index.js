@@ -12,7 +12,12 @@ gatepost.registerPG(client);
 client.connect();
 client.query("LISTEN forums_log");
 
+var start = null;
+
 client.on('notification', function (msg) {
+    if (start === null) {
+        start = JSON.parse(msg.payload).when;
+    }
 });
 
 var server;
@@ -189,7 +194,7 @@ lab.experiment('threads', function () {
             url: '/forums',
             payload: JSON.stringify({
                 name: 'test3',
-                description: 'best forum ever 1',
+                description: 'best forum ever 2',
                 parent_id: 1
             }),
             headers: {
@@ -477,6 +482,21 @@ lab.experiment('posts', function () {
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(200);
+            done();
+        });
+    });
+
+    lab.test('get changelog', function (done) {
+        server.inject({
+            method: 'get',
+            url: '/changes?when=' + start,
+            headers: {
+                gateway: gateway
+            }
+        }, function (res) {
+            code.expect(res.statusCode).to.equal(200);
+            var pl = JSON.parse(res.payload);
+            code.expect(pl.results.length).to.equal(9);
             done();
         });
     });
