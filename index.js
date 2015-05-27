@@ -2,6 +2,7 @@ var Forums = require('./controllers/forums');
 var Threads = require('./controllers/threads');
 var Posts = require('./controllers/posts');
 var Access = require('./controllers/access');
+var Changes = require('./controllers/changes');
 
 exports.register = function (plugin, options, done) {
     var server = plugin;
@@ -35,6 +36,8 @@ exports.register = function (plugin, options, done) {
     server.route({ method: 'post', path: '/access/{user_id}/forum/{forum_id}', config: Access.create});
     server.route({ method: 'get', path: '/access/{user_id}/forum/{forum_id}', config: Access.get});
     server.route({ method: 'put', path: '/access/{user_id}/forum/{forum_id}', config: Access.update});
+
+    server.route({ method: 'get', path: '/changes', config: Changes.listByDateAndUser });
 
     return done();
 };

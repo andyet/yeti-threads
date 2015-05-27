@@ -1,8 +1,8 @@
 #!/bin/bash
 
 psql < sql/structure.sql
-psql -d forum < sql/utility.sql
-psql -d forum < sql/trigger-funcs.sql
-psql -d forum < sql/triggers.sql
-psql -d forum < sql/create-update.sql
-psql -d forum < sql/data.sql
+psql -d yeti-threads < sql/utility.sql
+psql -d yeti-threads < sql/trigger-funcs.sql
+psql -d yeti-threads < sql/triggers.sql
+psql -d yeti-threads < sql/create-update.sql
+psql -d yeti-threads < sql/data.sql

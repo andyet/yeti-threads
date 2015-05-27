@@ -1,6 +1,6 @@
-DROP DATABASE forum;
-CREATE DATABASE forum WITH OWNER fritzy ENCODING 'UTF8';
-\connect forum;
+DROP DATABASE "yeti-threads";
+CREATE DATABASE "yeti-threads" ENCODING 'UTF8';
+\connect "yeti-threads";
 
 CREATE EXTENSION ltree;
 CREATE EXTENSION "uuid-ossp";
@@ -60,7 +60,7 @@ CREATE INDEX idx_posts_author on threads(author);
 
 CREATE TABLE forums_access (
     user_id TEXT,
-    forum_id INTEGER REFERENCES forums(id) ON DELETE CASCADE,
+    forum_id INTEGER,
     read BOOLEAN DEFAULT FALSE,
     write BOOLEAN DEFAULT FALSE,
     post BOOLEAN DEFAULT FALSE,

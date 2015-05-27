@@ -4,7 +4,7 @@
         "port": 8000,
         "host": "localhost"
     },
-    "db": "postgres://fritzy@localhost/forum",
+    "db": "postgres://localhost/yeti-threads",
     "thoonk": {
         "host": "127.0.0.1",
         "port": 6379
