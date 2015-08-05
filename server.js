@@ -12,13 +12,13 @@ var events = require('./events')(client, server);
 
 var plugins = [
     {
-        register: require('platform-gateway-auth'),
+        register: require('hapi-auth-jwt'),
         options: {}
     }, {
         register: require('good'),
         options: {
             reporters: [
-                {   
+                {
                     reporter: require('good-console'),
                     events: {log: '*', response: '*'}
                 }
@@ -26,10 +26,10 @@ var plugins = [
         }
     }, {
         register: require('./'),
-        options: {}
+        options: {jwtKey: config.jwtKey}
     },
     {
-        register: require('pgboom'), 
+        register: require('pgboom'),
         options: {
             getNull404: true
         }

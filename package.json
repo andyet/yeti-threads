@@ -18,6 +18,7 @@
     "good": "^6.1.1",
     "good-console": "^5.0.0",
     "hapi": "^8.4.0",
+    "hapi-auth-jwt": "^2.1.2",
     "joi": "^6.3.0",
     "knex": "^0.8.3",
     "lab": "^5.8.0",
@@ -25,8 +26,8 @@
     "lout": "^6.2.2",
     "pg": "^4.3.0",
     "pgboom": "^0.1.0",
-    "platform-gateway-auth": "^2.0.0",
     "verymodel": "^2.2.0",
+    "jsonwebtoken": "^5.0.4",
     "ws": "^0.7.1"
   }
 }

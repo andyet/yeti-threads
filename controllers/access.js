@@ -9,7 +9,7 @@ module.exports = {
             Access.get({forum_id: request.params.forum_id, user_id: request.params.user_id}, reply);
         },
         auth: {
-            strategy: 'gateway',
+            strategy: 'token',
             scope: 'forum_admin'
         },
         validate: {
@@ -26,7 +26,7 @@ module.exports = {
             Access.update(request.payload, reply);
         },
         auth: {
-            strategy: 'gateway',
+            strategy: 'token',
             scope: 'forum_admin'
         },
         validate: {
@@ -46,7 +46,7 @@ module.exports = {
             });
         },
         auth: {
-            strategy: 'gateway',
+            strategy: 'token',
             scope: 'forum_admin'
         },
         validate: {

@@ -8,7 +8,7 @@ module.exports = {
             var params = lodash.assign(request.query, {user_id: request.auth.credentials.user});
             Change.getByDateAndUser(params, reply);
         },
-        auth: 'gateway',
+        auth: 'token',
         validate: {
             query: {
                 limit: joi.number().integer().min(1),

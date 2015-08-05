@@ -6,6 +6,11 @@ var lab = exports.lab = require('lab').script();
 var Hapi = require('hapi');
 var util = require('util');
 var code = require('code');
+var jwt = require('jsonwebtoken');
+
+config.jwtKey = require('crypto').randomBytes(48).toString('base64');
+var token = jwt.sign({user: 'tester-user', scope: ['forum_admin']}, config.jwtKey, {expiresInMinutes: 15});
+var authorization = 'Bearer ' + token;
 
 var client = new pg.Client(config.db);
 gatepost.registerPG(client);
@@ -22,12 +27,14 @@ client.on('notification', function (msg) {
 
 var server;
 
+/*
 var gateway = JSON.stringify({
     client_id: 'foo',
     user_id: 'tester-user',
     api: 'yeti-threads-api',
     scopes: ['forum_admin']
 });
+*/
 
 lab.experiment('forums', function () {
     var forum;
@@ -37,10 +44,13 @@ lab.experiment('forums', function () {
 
         server.register([
             {
-                register: require('platform-gateway-auth')
+                register: require('hapi-auth-jwt')
             },
             {
                 register: require('../'),
+                options: {
+                    jwtKey: config.jwtKey
+                }
             },
             {
                 register: require('pgboom'),
@@ -63,7 +73,7 @@ lab.experiment('forums', function () {
                 post: true
             }),
             headers: {
-                gateway: gateway
+                authorization: authorization
             }
         }, function (res) {
             done();
@@ -80,7 +90,7 @@ lab.experiment('forums', function () {
                 parent_id: 1
             }),
             headers: {
-                gateway: gateway
+                Authorization: authorization
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(201);
@@ -95,7 +105,7 @@ lab.experiment('forums', function () {
             method: 'get',
             url: '/forums/' + forum.id,
             headers: {
-                gateway: gateway
+                authorization: authorization
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(200);
@@ -114,7 +124,7 @@ lab.experiment('forums', function () {
                 name: 'test2',
             }),
             headers: {
-                gateway: gateway
+                authorization: authorization
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(200);
@@ -132,12 +142,18 @@ lab.experiment('forums', function () {
                 name: 'test2',
             }),
             headers: {
+                authorization: 'Bearer ' + jwt.sign({
+                    user_id: 'derpina',
+                    scopes: ['forum_admin']
+                }, config.jwtKey, {expiresInMinutes: 15})
+                /*
                 gateway: JSON.stringify({
                     client_id: 'foo',
                     user_id: 'derpina',
                     api: 'yeti-threads-api',
                     scopes: ['forum_admin']
                 })
+                */
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(403);
@@ -149,7 +165,7 @@ lab.experiment('forums', function () {
             method: 'get',
             url: '/forums/' + -32,
             headers: {
-                gateway: gateway
+                authorization: authorization
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(404);
@@ -161,7 +177,7 @@ lab.experiment('forums', function () {
             method: 'get',
             url: '/forums',
             headers: {
-                gateway: gateway
+                authorization: authorization
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(200);
@@ -176,7 +192,7 @@ lab.experiment('forums', function () {
             method: 'delete',
             url: '/forums/' + forum.id,
             headers: {
-                gateway: gateway
+                authorization: authorization
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(200);
@@ -198,7 +214,7 @@ lab.experiment('threads', function () {
                 parent_id: 1
             }),
             headers: {
-                gateway: gateway
+                authorization: authorization
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(201);
@@ -218,7 +234,7 @@ lab.experiment('threads', function () {
                 post: true
             }),
             headers: {
-                gateway: gateway
+                authorization: authorization
             }
         }, function (res) {
             done();
@@ -234,7 +250,7 @@ lab.experiment('threads', function () {
                 forum_id: forum.id,
             }),
             headers: {
-                gateway: gateway
+                authorization: authorization
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(201);
@@ -251,7 +267,7 @@ lab.experiment('threads', function () {
             method: 'get',
             url: '/threads/' + thread.id,
             headers: {
-                gateway: gateway
+                authorization: authorization
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(200);
@@ -268,7 +284,7 @@ lab.experiment('threads', function () {
             method: 'get',
             url: '/threads',
             headers: {
-                gateway: gateway
+                authorization: authorization
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(200);
@@ -285,7 +301,7 @@ lab.experiment('threads', function () {
             method: 'delete',
             url: '/threads/' + thread.id,
             headers: {
-                gateway: gateway
+                authorization: authorization
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(200);
@@ -298,7 +314,7 @@ lab.experiment('threads', function () {
             method: 'delete',
             url: '/forums/' + forum.id,
             headers: {
-                gateway: gateway
+                authorization: authorization
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(200);
@@ -321,7 +337,7 @@ lab.experiment('posts', function () {
                 parent_id: 1
             }),
             headers: {
-                gateway: gateway
+                authorization: authorization
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(201);
@@ -341,7 +357,7 @@ lab.experiment('posts', function () {
                 post: true
             }),
             headers: {
-                gateway: gateway
+                authorization: authorization
             }
         }, function (res) {
             done();
@@ -357,7 +373,7 @@ lab.experiment('posts', function () {
                 forum_id: forum.id,
             }),
             headers: {
-                gateway: gateway
+                authorization: authorization
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(201);
@@ -378,7 +394,7 @@ lab.experiment('posts', function () {
                 thread_id: thread.id,
             }),
             headers: {
-                gateway: gateway
+                authorization: authorization
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(201);
@@ -399,7 +415,7 @@ lab.experiment('posts', function () {
                 parent_id: post1.id
             }),
             headers: {
-                gateway: gateway
+                authorization: authorization
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(201);
@@ -420,7 +436,7 @@ lab.experiment('posts', function () {
                 parent_id: post1.id
             }),
             headers: {
-                gateway: gateway
+                authorization: authorization
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(201);
@@ -441,7 +457,7 @@ lab.experiment('posts', function () {
                 parent_id: post2.id
             }),
             headers: {
-                gateway: gateway
+                authorization: authorization
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(201);
@@ -458,7 +474,7 @@ lab.experiment('posts', function () {
             method: 'get',
             url: '/threads/' + thread.id + '/posts',
             headers: {
-                gateway: gateway
+                authorization: authorization
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(200);
@@ -478,7 +494,7 @@ lab.experiment('posts', function () {
             method: 'delete',
             url: '/posts/' + post1.id,
             headers: {
-                gateway: gateway
+                authorization: authorization
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(200);
@@ -491,7 +507,7 @@ lab.experiment('posts', function () {
             method: 'get',
             url: '/changes?when=' + start,
             headers: {
-                gateway: gateway
+                authorization: authorization
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(200);
@@ -506,7 +522,7 @@ lab.experiment('posts', function () {
             method: 'delete',
             url: '/threads/' + thread.id,
             headers: {
-                gateway: gateway
+                authorization: authorization
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(200);
@@ -519,7 +535,7 @@ lab.experiment('posts', function () {
             method: 'delete',
             url: '/forums/' + forum.id,
             headers: {
-                gateway: gateway
+                authorization: authorization
             }
         }, function (res) {
             code.expect(res.statusCode).to.equal(200);

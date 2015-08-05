@@ -7,7 +7,7 @@ module.exports = {
         handler: function (request, reply) {
             Forum.getForum({forum_id: request.params.forum_id, user_id: request.auth.credentials.user}, reply);
         },
-        auth: 'gateway',
+        auth: 'token',
         validate: {
             params: {
                 forum_id: joi.number().integer()
@@ -21,7 +21,7 @@ module.exports = {
             params.user_id = request.auth.credentials.user;
             Forum.all(params, reply);
         },
-        auth: 'gateway',
+        auth: 'token',
         validate: {
             query: {
                 offset: joi.number().integer(),
@@ -34,7 +34,7 @@ module.exports = {
         handler: function (request, reply) {
             Forum.getTree(reply);
         },
-        auth: 'gateway'
+        auth: 'token'
     },
 
     create: {
@@ -45,7 +45,7 @@ module.exports = {
             });
 
         },
-        auth: 'gateway',
+        auth: 'token',
         validate: {
             payload: Forum.exportJoi(['name', 'description', 'parent_id']).requiredKeys(['name'])
         }
@@ -57,7 +57,7 @@ module.exports = {
             forum.id = request.params.forum_id;
             forum.update({user_id: request.auth.credentials.user}, reply);
         },
-        auth: 'gateway',
+        auth: 'token',
         validate: {
             payload: Forum.exportJoi(['owner', 'name', 'description', 'parent_id']),
             params: {
@@ -72,7 +72,7 @@ module.exports = {
         },
         auth: {
             scope: 'forum_admin',
-            strategy: 'gateway'
+            strategy: 'token'
         },
         validate: {
             params: {

@@ -7,7 +7,7 @@ module.exports = {
         handler: function (request, reply) {
             Post.get({post_id: request.params.post_id, user_id: request.auth.credentials.user}, reply);
         },
-        auth: 'gateway',
+        auth: 'token',
         validate: {
             params: {
                 post_id: joi.number().integer().required()
@@ -20,7 +20,7 @@ module.exports = {
             var params = lodash.assign(request.query, {user_id: request.auth.credentials.user});
             Post.all(params, reply);
         },
-        auth: 'gateway',
+        auth: 'token',
         validate: {
             query: {
                 limit: joi.number().integer(),
@@ -34,7 +34,7 @@ module.exports = {
             var params = lodash.assign(request.query, request.params, {user_id: request.auth.credentials.user});
             Post.allByThread(params, reply);
         },
-        auth: 'gateway',
+        auth: 'token',
         validate: {
             params: {
                 thread_id: joi.number().integer().required()
@@ -53,7 +53,7 @@ module.exports = {
                 return reply(err, post).code(201);
             });
         },
-        auth: 'gateway',
+        auth: 'token',
         validate: {
             payload: Post.exportJoi(['body', 'parent_id', 'thread_id']).requiredKeys(['body'])
         }
@@ -64,7 +64,7 @@ module.exports = {
             var post = Post.create(request.payload);
             Post.update({post: post, user_id: request.auth.credentials.user}, reply);
         },
-        auth: 'gateway',
+        auth: 'token',
         validate: {
             params: {
                 post_id: joi.number().integer().required()
@@ -78,7 +78,7 @@ module.exports = {
             var post = Post.create({id: request.params.post_id, body: '[deleted]', author: '[deleted]'});
             Post.update({post: post, user_id: request.auth.credentials.user}, reply);
         },
-        auth: 'gateway',
+        auth: 'token',
         validate: {
             params: {
                 post_id: joi.number().integer()

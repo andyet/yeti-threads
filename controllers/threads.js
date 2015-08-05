@@ -7,7 +7,7 @@ module.exports = {
         handler: function (request, reply) {
             Thread.get({thread_id: request.params.thread_id, user_id: request.auth.credentials.user}, reply);
         },
-        auth: 'gateway',
+        auth: 'token',
         validate: {
             params: {
                 thread_id: joi.number().integer().required()
@@ -20,7 +20,7 @@ module.exports = {
             var params = lodash.assign(request.query, {user_id: request.auth.credentials.user});
             Thread.all(params, reply);
         },
-        auth: 'gateway',
+        auth: 'token',
         validate: {
             query: {
                 limit: joi.number().integer(),
@@ -34,7 +34,7 @@ module.exports = {
             var params = lodash.assign(request.query, request.params, {user_id: request.auth.credentials.user});
             Thread.allByForum(params, reply);
         },
-        auth: 'gateway',
+        auth: 'token',
         validate: {
             params: {
                 forum_id: joi.number().integer().required()
@@ -53,7 +53,7 @@ module.exports = {
                 return reply(err, thread).code(201);
             });
         },
-        auth: 'gateway',
+        auth: 'token',
         validate: {
             payload: Thread.exportJoi(['forum_id', 'subject', 'open', 'locked', 'tags']).requiredKeys(['forum_id', 'subject'])
         }
@@ -63,7 +63,7 @@ module.exports = {
         handler: function (request, reply) {
             Thread.update(request.params.thread_id, request.payload, reply);
         },
-        auth: 'gateway',
+        auth: 'token',
         validate: {
             params: {
                 thread_id: joi.number().integer().required()
@@ -79,7 +79,7 @@ module.exports = {
             }
             Thread.delete(request.params.thread_id, reply);
         },
-        auth: 'gateway',
+        auth: 'token',
         validate: {
             params: {
                 thread_id: joi.number().integer()

@@ -10,6 +10,17 @@ exports.register = function (plugin, options, done) {
     plugin.bind({
 
     });
+    server.auth.strategy('token', 'jwt', {
+        key: options.jwtKey,
+        validateFunc: function (decoded, cb) {
+            var error, credentials = decoded;
+            if (!credentials) {
+                return cb(error, false, credentials);
+            }
+
+            return cb(error, true, credentials);
+        }
+    })
 
     //forum
     server.route({ method: 'get', path: '/forums/{forum_id}', config: Forums.get});

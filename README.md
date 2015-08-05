@@ -11,11 +11,12 @@ Yeti Threads was written to explore and document a simple and solid approach for
 3. cd yeti-threads
 4. cp config/example.json config/local.json
 5. edit config/local.json
-6. cp config/local.json config/test.json
-7. npm i
-8. ./rebuild
-9. npm test
-10. npm start
+6. set jwtKey. Try something like `console.log(require('crypto').randomBytes(48).toString('base64'));` to generate a value.
+7. cp config/local.json config/test.json
+8. npm i
+9. ./rebuild
+10. npm test
+11. npm start
 
 ## Clients
 
