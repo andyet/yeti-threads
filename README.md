@@ -2,6 +2,8 @@
 
 *A real-time threaded forum micro-service API in Node.js.*
 
+![Yeti Threads illustration by Lynn Fisher](https://cldup.com/s3fIcU4Zcv.png)
+
 Yeti Threads was written to explore and document a simple and solid approach for micro-service APIs in Node.js. It also happens to be a practical solution to a common need.
 
 ## Quick Start
@@ -26,14 +28,14 @@ As of now, there are no clients yet. Have at it!
 
 The API requires the use of [JSON Web Tokens](http://jwt.io/) for authentication.
 
-[Auth0](https://auth0.com) provides a free service which can provide a login page, user management, tokens, and proper redirects back your clint API. Or you can use your own, of course!
+[Auth0](https://auth0.com) provides a free service which can provide a login page, user management, tokens, and proper redirects back your client API. Or you can use your own, of course!
 
 ## API
 
 The API is a fairly straight forward REST API for forums, threads, posts, access, and activity logs.
 It also includes a websocket API for live hints for new/updated resources.
 
-Please read more at [API.md](https://github.com/andyet/yeti-threads/API.md)
+Please read more at [API.md](https://github.com/andyet/yeti-threads/API.md) (coming soon)
 
 ## Open Source
 
