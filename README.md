@@ -35,7 +35,7 @@ The API requires the use of [JSON Web Tokens](http://jwt.io/) for authentication
 The API is a fairly straight forward REST API for forums, threads, posts, access, and activity logs.
 It also includes a websocket API for live hints for new/updated resources.
 
-Please read more at [API.md](https://github.com/andyet/yeti-threads/API.md) (coming soon)
+Please read more at [API.md](/API.md)
 
 ## Open Source
 
