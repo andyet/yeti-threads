@@ -1,6 +1,7 @@
 "use strict";
 
 let gatepost = require('gatepost');
+let SQL = require('sql-template-strings');
 
 let Access = new gatepost.Model({
     user_id: {type: 'string'},
@@ -14,7 +15,7 @@ let Access = new gatepost.Model({
 
 Access.registerFactorySQL({
     name: "get",
-    sql: (args) => gatepost.SQL`SELECT user_id, forum_id, read, write, post FROM access WHERE user_id=${args.user_id} AND forum_id=${args.forum_id}`,
+    sql: (args) => SQL`SELECT user_id, forum_id, read, write, post FROM access WHERE user_id=${args.user_id} AND forum_id=${args.forum_id}`,
     oneResult: true
 });
 
@@ -26,7 +27,7 @@ let AccessPage = new gatepost.Model({
 
 AccessPage.fromSQL({
     name: "list",
-    sql: (args) => gatepost.SQL`SELECT user_id, forum_id, read, write, post FROM access LIMIT $limit OFFSET $(args.offset) ORDER BY user_id, forum_id`,
+    sql: (args) => SQL`SELECT user_id, forum_id, read, write, post FROM access LIMIT $limit OFFSET $(args.offset) ORDER BY user_id, forum_id`,
     defaults: {
         limit: 20,
         offset: 0
@@ -35,7 +36,7 @@ AccessPage.fromSQL({
 
 AccessPage.fromSQL({
     name: "listByUser",
-    sql: (args) => gatepost.SQL`SELECT user_id, forum_id, read, write FROM access WHERE user_id=${args.user_id} LIMIT ${args.limit} OFFSET ${args.offset} ORDER BY forum_id`,
+    sql: (args) => SQL`SELECT user_id, forum_id, read, write FROM access WHERE user_id=${args.user_id} LIMIT ${args.limit} OFFSET ${args.offset} ORDER BY forum_id`,
     defaults: {
         limit: 20,
         offset: 0
@@ -44,7 +45,7 @@ AccessPage.fromSQL({
 
 AccessPage.fromSQL({
     name: "listByForum",
-    sql: (args, model) => gatepost.SQL`SELECT user_id, forum_id, read, write FROM access WHERE forum_id=${args.forum_id} LIMIT $limit OFFSET ${args.offset} ORDER BY user_id`,
+    sql: (args, model) => SQL`SELECT user_id, forum_id, read, write FROM access WHERE forum_id=${args.forum_id} LIMIT $limit OFFSET ${args.offset} ORDER BY user_id`,
     defaults: {
         limit: 20,
         offset: 0
@@ -56,13 +57,13 @@ Access.list = AccessPage.list;
 Access.fromSQL({
     name: 'insert',
     instance: true,
-    sql: (args, model) => gatepost.SQL`INSERT INTO forums_access (user_id, forum_id, read, write, post) VALUES (${model.user_id}, ${model.forum_id}, ${model.read}, ${model.write}, ${model.post})`,
+    sql: (args, model) => SQL`INSERT INTO forums_access (user_id, forum_id, read, write, post) VALUES (${model.user_id}, ${model.forum_id}, ${model.read}, ${model.write}, ${model.post})`,
 });
 
 Access.fromSQL({
     name: 'update',
     instance: true,
-    sql: (args, model) => gatepost.SQL`UPDATE forums_access SET read=${model.read}, write=${model.write}, post=${model.post} WHERE user_id=${model.user_id}, forum_id=${model.forum_id}`,
+    sql: (args, model) => SQL`UPDATE forums_access SET read=${model.read}, write=${model.write}, post=${model.post} WHERE user_id=${model.user_id}, forum_id=${model.forum_id}`,
 });
 
 

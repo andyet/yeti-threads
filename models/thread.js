@@ -1,6 +1,7 @@
 "use strict";
 
 let gatepost = require('gatepost');
+let SQL = require('sql-template-strings');
 let joi = require('joi');
 
 let Thread = new gatepost.Model({
@@ -44,7 +45,7 @@ let Thread = new gatepost.Model({
 
 Thread.registerFactorySQL({
     name: "get",
-    sql: (args) => gatepost.SQL`SELECT threads.id, threads.forum_id, threads.author, threads.subject, threads.open, threads.locked, threads.tags, threads.created, threads.updated
+    sql: (args) => SQL`SELECT threads.id, threads.forum_id, threads.author, threads.subject, threads.open, threads.locked, threads.tags, threads.created, threads.updated
 FROM threads
 JOIN forums ON threads.forum_id=forums.id
 JOIN forums_access ON forums_access.forum_id=forums.id
@@ -54,7 +55,7 @@ WHERE threads.id=${args.thread_id} AND (forums_access.user_id=${args.user_id} OR
 
 Thread.registerFactorySQL({
     name: "delete",
-    sql: (args) => gatepost.SQL`DELETE FROM threads WHERE id=${args.arg}`,
+    sql: (args) => SQL`DELETE FROM threads WHERE id=${args.arg}`,
     oneArg: true,
     oneResult: true
 });
@@ -67,7 +68,7 @@ let ThreadPage = new gatepost.Model({
 
 ThreadPage.registerFactorySQL({
     name: "all",
-    sql: (args) => gatepost.SQL`SELECT (SELECT n_live_tup FROM pg_stat_user_tables WHERE relname='threads') AS total,
+    sql: (args) => SQL`SELECT (SELECT n_live_tup FROM pg_stat_user_tables WHERE relname='threads') AS total,
 json_agg(row_to_json(thread_rows)) as results,
 count(thread_rows.*) as count
 FROM (SELECT threads.id, threads.forum_id, threads.author, threads.subject, threads.open, threads.locked, threads.tags, threads.created, threads.updated
@@ -86,7 +87,7 @@ ORDER BY threads.id LIMIT ${args.limit} OFFSET ${args.offset}) thread_rows`,
 Thread.fromSQL({
     name: 'insert',
     instance: true,
-    sql: (args, model) => gatepost.SQL`SELECT * FROM create_thread(${model.toJSON()}, ${args.user})`,
+    sql: (args, model) => SQL`SELECT * FROM create_thread(${model.toJSON()}, ${args.user})`,
     oneResult: true,
     required: true
 });
@@ -94,13 +95,13 @@ Thread.fromSQL({
 Thread.registerFactorySQL({
     name: 'update',
     instance: true,
-    sql: (args, model) => gatepost.SQL`SELECT * from update_thread(${model.toJSON()}, ${args.user_id})`,
+    sql: (args, model) => SQL`SELECT * from update_thread(${model.toJSON()}, ${args.user_id})`,
     oneResult: true
 });
 
 ThreadPage.registerFactorySQL({
     name: "allByForum",
-    sql: (args) => gatepost.SQL`SELECT (SELECT n_live_tup FROM pg_stat_user_tables WHERE relname='threads') AS total,
+    sql: (args) => SQL`SELECT (SELECT n_live_tup FROM pg_stat_user_tables WHERE relname='threads') AS total,
         json_agg(row_to_json(thread_rows)) as results,
         count(thread_rows.*) as count
         FROM (SELECT threads.id, threads.forum_id, threads.author, threads.subject, threads.open, threads.locked, threads.tags, threads.created, threads.updated

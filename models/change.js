@@ -1,6 +1,7 @@
 "use strict";
 
 let gatepost = require('gatepost');
+let SQL = require('sql-template-strings');
 let joi = require('joi');
 let util = require('util');
 
@@ -38,10 +39,10 @@ let Changelist = new gatepost.Model({
 
 Changelist.fromSQL({
     name: 'getByDateAndUser',
-    sql: (args, model) => gatepost.SQL`SELECT json_agg(row_to_json(logs)) AS results,
+    sql: (args, model) => SQL`SELECT json_agg(row_to_json(logs)) AS results,
 COUNT(logs.*) AS "count",
-(SELECT count(distinct (forums_log.forum_id, forums_log.other_id)) as total from forums_log JOIN forums_access ON forums_log.forum_id=forums_access.forum_id WHERE forums_access.user_id=${args.user_id} AND "time" >= ${args.when}) AS total 
-FROM (SELECT DISTINCT ON (forums_log.forum_id, forums_log.other_id) * FROM forums_log
+(SELECT count(distinct (forums_log.forum_id, forums_log.other_id, forums_log.tbl)) as total from forums_log JOIN forums_access ON forums_log.forum_id=forums_access.forum_id WHERE forums_access.user_id=${args.user_id} AND "time" >= ${args.when}) AS total
+FROM (SELECT DISTINCT ON (forums_log.forum_id, forums_log.other_id, forums_log.tbl) * FROM forums_log
 JOIN forums_access ON forums_log.forum_id=forums_access.forum_id
 WHERE forums_access.user_id=${args.user_id} AND "time" >= ${args.when}
 LIMIT ${args.limit} OFFSET ${args.offset}) logs`,

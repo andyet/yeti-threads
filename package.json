@@ -20,14 +20,15 @@
     "hapi": "^8.4.0",
     "hapi-auth-jwt": "^2.1.2",
     "joi": "^6.3.0",
+    "jsonwebtoken": "^5.0.4",
     "knex": "^0.8.3",
     "lab": "^5.8.0",
     "lodash": "^3.7.0",
     "lout": "^6.2.2",
     "pg": "^4.3.0",
     "pgboom": "^0.1.0",
+    "sql-template-strings": "^1.0.2",
     "verymodel": "^2.2.0",
-    "jsonwebtoken": "^5.0.4",
     "ws": "^0.7.1"
   }
 }

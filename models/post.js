@@ -1,6 +1,7 @@
 "use strict";
 
 let gatepost = require('gatepost');
+let SQL = require('sql-template-strings');
 let joi = require('joi');
 
 let Post = new gatepost.Model({
@@ -54,7 +55,7 @@ let PostPage = new gatepost.Model({
 
 Post.registerFactorySQL({
     name: "get",
-    sql: (args) => gatepost.SQL`SELECT posts.id, posts.author, posts.body, posts.parent_id, posts.thread_id, posts.path, posts.created, posts.updated FROM posts
+    sql: (args) => SQL`SELECT posts.id, posts.author, posts.body, posts.parent_id, posts.thread_id, posts.path, posts.created, posts.updated FROM posts
 JOIN threads ON posts.thread_id=threads.id
 JOIN forums ON threads.forum_id=forums.id
 JOIN forums_access ON forums_access.forum_id=forums.id
@@ -64,7 +65,7 @@ WHERE posts.id=${args.post_id} AND ((forums_access.user_id=${args.user_id} AND f
 
 Post.registerFactorySQL({
     name: "delete",
-    sql: (args) => gatepost.SQL`DELETE FROM posts WHERE id=${args.arg}`,
+    sql: (args) => SQL`DELETE FROM posts WHERE id=${args.arg}`,
     oneArg: true,
     oneResult: true
 });
@@ -72,7 +73,7 @@ Post.registerFactorySQL({
 Post.fromSQL({
     name: 'insert',
     instance: true,
-    sql: (args, model) => gatepost.SQL`SELECT * FROM create_post(${model.toJSON()}, ${args.user})`,
+    sql: (args, model) => SQL`SELECT * FROM create_post(${model.toJSON()}, ${args.user})`,
     oneResult: true,
     require: true
 });
@@ -80,7 +81,7 @@ Post.fromSQL({
 Post.fromSQL({
     name: 'update',
     instance: true,
-    sql: (args, model) => gatepost.SQL`SELECT update_post(${model.toJSON()}, ${args.user}) AS id`,
+    sql: (args, model) => SQL`SELECT update_post(${model.toJSON()}, ${args.user}) AS id`,
     oneResult: true,
     require: true
 });
@@ -88,7 +89,7 @@ Post.fromSQL({
 
 PostPage.fromSQL({
     name: "all",
-    sql: (args) => gatepost.SQL`SELECT (SELECT n_live_tup FROM pg_stat_user_tables WHERE relname=posts') AS total,
+    sql: (args) => SQL`SELECT (SELECT n_live_tup FROM pg_stat_user_tables WHERE relname=posts') AS total,
         json_agg(row_to_json(post_rows)) as results,
         count(post_rows.*) as count
         FROM (SELECT id, author, body, parent_id, thread_id, path, created, updated
@@ -107,7 +108,7 @@ PostPage.fromSQL({
 
 PostPage.registerFactorySQL({
     name: 'allByThread',
-    sql: (args) => gatepost.SQL`SELECT (SELECT count(id) FROM posts WHERE thread_id=${args.thread_id}) AS total,
+    sql: (args) => SQL`SELECT (SELECT count(id) FROM posts WHERE thread_id=${args.thread_id}) AS total,
 json_agg(row_to_json(post_rows)) as results,
 count(post_rows.*) as count
 FROM (WITH RECURSIVE included_posts(id, author, body, parent_id, thread_id, path, created, updated) AS (

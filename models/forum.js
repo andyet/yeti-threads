@@ -1,6 +1,7 @@
 "use strict";
 
 let gatepost = require('gatepost');
+let SQL = require('sql-template-strings');
 let joi = require('joi');
 let knex = require('knex')({dialect: 'pg'});
 
@@ -40,7 +41,7 @@ let ForumTree = new gatepost.Model({
 
 ForumTree.fromSQL({
     name: "get",
-    sql: () => gatepost.SQL`select array_to_json(ARRAY(select array_to_json(array_agg(json_build_object(f2.id, f2.name))) as results from forums f1 join forums f2 ON f2.id::text=ANY(string_to_array(f1.path::text, '.')) GROUP BY f1.path)) as results`,
+    sql: () => SQL`select array_to_json(ARRAY(select array_to_json(array_agg(json_build_object(f2.id, f2.name))) as results from forums f1 join forums f2 ON f2.id::text=ANY(string_to_array(f1.path::text, '.')) GROUP BY f1.path)) as results`,
     oneResult: true
 });
 
@@ -62,7 +63,7 @@ let IdArray = new gatepost.Model({
 
 IdArray.fromSQL({
     name: "getIds",
-    sql: (args) => gatepost.SQL`SELECT json_agg(forums.id) AS ids FROM forums JOIN forums_access ON forums.id=forums_access.forum_id WHERE (forums_access.user_id=${args.arg} AND forums_access.read=True) OR forums.owner=${args.arg}`,
+    sql: (args) => SQL`SELECT json_agg(forums.id) AS ids FROM forums JOIN forums_access ON forums.id=forums_access.forum_id WHERE (forums_access.user_id=${args.arg} AND forums_access.read=True) OR forums.owner=${args.arg}`,
     oneArg: true,
     oneResult: true
 });
@@ -81,7 +82,7 @@ Forum.fromSQL({
 Forum.fromSQL({
     name: 'insert',
     instance: true,
-    sql: (args, model) => gatepost.SQL`SELECT * FROM create_forum(${model.toJSON()}, ${args.user})`,
+    sql: (args, model) => SQL`SELECT * FROM create_forum(${model.toJSON()}, ${args.user})`,
     oneResult: true,
     required: true
 });
@@ -89,19 +90,19 @@ Forum.fromSQL({
 Forum.fromSQL({
     name: 'update',
     instance: true,
-    sql: (args, model) => gatepost.SQL`SELECT * from update_forum(${model.toJSON()}, ${args.user})`,
+    sql: (args, model) => SQL`SELECT * from update_forum(${model.toJSON()}, ${args.user})`,
     oneResult: true,
 });
 
 Forum.fromSQL({
     name: 'delete',
-    sql: (args, model) => gatepost.SQL`DELETE FROM forums WHERE id=${args.forum_id} AND owner=${args.user}`,
+    sql: (args, model) => SQL`DELETE FROM forums WHERE id=${args.forum_id} AND owner=${args.user}`,
     oneResult: true,
 });
 
 Forum.fromSQL({
     name: 'getForum',
-    sql: (args) => gatepost.SQL`SELECT id, owner, name, description, created, updated, path, (SELECT json_agg(row_to_json(f_rows)) as forums
+    sql: (args) => SQL`SELECT id, owner, name, description, created, updated, path, (SELECT json_agg(row_to_json(f_rows)) as forums
 FROM (select id, owner, name, description, created, updated, path FROM forums AS forum_children
 WHERE forum_parent.id=forum_children.parent_id) f_rows) as forums
 FROM forums as forum_parent
@@ -118,7 +119,7 @@ let ForumPage = new gatepost.Model({
 
 ForumPage.fromSQL({
     name: "all",
-    sql: (args) => gatepost.SQL`SELECT (SELECT n_live_tup FROM pg_stat_user_tables WHERE relname='forums') AS total,
+    sql: (args) => SQL`SELECT (SELECT n_live_tup FROM pg_stat_user_tables WHERE relname='forums') AS total,
 json_agg(row_to_json(forum_rows)) as results,
 count(forum_rows.*) as count
 FROM (SELECT id, owner, name, description, parent_id, path, created, updated

@@ -17,15 +17,6 @@ var start = null;
 
 var server;
 
-/*
-var gateway = JSON.stringify({
-    client_id: 'foo',
-    user_id: 'tester-user',
-    api: 'yeti-threads-api',
-    scopes: ['forum_admin']
-});
-*/
-
 lab.experiment('forums', function () {
     var forum;
     lab.before(function (done) {
