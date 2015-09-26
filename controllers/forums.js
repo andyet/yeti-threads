@@ -39,8 +39,8 @@ module.exports = {
 
     create: {
         handler: function (request, reply) {
-            var forum = Forum.create(request.payload).toJSON();
-            Forum.insert(forum, request.auth.credentials.user, function (err) {
+            var forum = Forum.create(request.payload);
+            forum.insert({user: request.auth.credentials.user}, function (err, forum) {
                 return reply(err, forum).code(201);
             });
 
@@ -55,7 +55,7 @@ module.exports = {
         handler: function (request, reply) {
             var forum = Forum.create(request.payload);
             forum.id = request.params.forum_id;
-            forum.update({user_id: request.auth.credentials.user}, reply);
+            forum.update({user: request.auth.credentials.user}, reply);
         },
         auth: 'token',
         validate: {
@@ -68,7 +68,7 @@ module.exports = {
 
     delete: {
         handler: function (request, reply) {
-            Forum.delete(request.params.forum_id, reply);
+            Forum.delete({forum_id: request.params.forum_id, user: request.auth.credentials.user}, reply);
         },
         auth: {
             scope: 'forum_admin',

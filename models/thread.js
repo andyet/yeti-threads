@@ -1,7 +1,9 @@
-var gatepost = require('gatepost');
-var joi = require('joi');
+"use strict";
 
-var Thread = new gatepost.Model({
+let gatepost = require('gatepost');
+let joi = require('joi');
+
+let Thread = new gatepost.Model({
     id: {
         primary: true,
         validate: joi.number().integer()
@@ -42,26 +44,22 @@ var Thread = new gatepost.Model({
 
 Thread.registerFactorySQL({
     name: "get",
-    sql: [
-        "SELECT threads.id, threads.forum_id, threads.author, threads.subject, threads.open, threads.locked, threads.tags, threads.created, threads.updated",
-        "FROM threads",
-        "JOIN forums ON threads.forum_id=forums.id",
-        "JOIN forums_access ON forums_access.forum_id=forums.id",
-        "WHERE threads.id=$thread_id AND (forums_access.user_id=$user_id OR forums.owner=$user_id)"
-    ].join(' '),
+    sql: (args) => gatepost.SQL`SELECT threads.id, threads.forum_id, threads.author, threads.subject, threads.open, threads.locked, threads.tags, threads.created, threads.updated
+FROM threads
+JOIN forums ON threads.forum_id=forums.id
+JOIN forums_access ON forums_access.forum_id=forums.id
+WHERE threads.id=${args.thread_id} AND (forums_access.user_id=${args.user_id} OR forums.owner=${args.user_id})`,
     oneResult: true
 });
 
 Thread.registerFactorySQL({
     name: "delete",
-    sql: [
-        "DELETE FROM threads WHERE id=$arg"
-    ].join(' '),
+    sql: (args) => gatepost.SQL`DELETE FROM threads WHERE id=${args.arg}`,
     oneArg: true,
     oneResult: true
 });
 
-var ThreadPage = new gatepost.Model({
+let ThreadPage = new gatepost.Model({
     results: {collection: 'thread'},
     count: {type: 'integer'},
     total: {type: 'integer'}
@@ -69,17 +67,15 @@ var ThreadPage = new gatepost.Model({
 
 ThreadPage.registerFactorySQL({
     name: "all",
-    sql: [
-        "SELECT (SELECT n_live_tup FROM pg_stat_user_tables WHERE relname='threads') AS total,",
-        "json_agg(row_to_json(thread_rows)) as results,",
-        "count(thread_rows.*) as count",
-        'FROM (SELECT threads.id, threads.forum_id, threads.author, threads.subject, threads.open, threads.locked, threads.tags, threads.created, threads.updated',
-        'FROM threads',
-        'JOIN forums ON threads.forum_id=forums.id',
-        'JOIN forums_access ON forums.id=forums_access.forum_id',
-        'WHERE user_id=$user_id OR forums.owner=$user_id',
-        'ORDER BY threads.id LIMIT $limit OFFSET $offset) thread_rows'
-    ].join(' '),
+    sql: (args) => gatepost.SQL`SELECT (SELECT n_live_tup FROM pg_stat_user_tables WHERE relname='threads') AS total,
+json_agg(row_to_json(thread_rows)) as results,
+count(thread_rows.*) as count
+FROM (SELECT threads.id, threads.forum_id, threads.author, threads.subject, threads.open, threads.locked, threads.tags, threads.created, threads.updated
+FROM threads
+JOIN forums ON threads.forum_id=forums.id
+JOIN forums_access ON forums.id=forums_access.forum_id
+WHERE user_id=${args.user_id} OR forums.owner=${args.user_id}
+ORDER BY threads.id LIMIT ${args.limit} OFFSET ${args.offset}) thread_rows`,
     defaults: {
         limit: 20,
         offset: 0
@@ -87,39 +83,32 @@ ThreadPage.registerFactorySQL({
     oneResult: true
 });
 
-Thread.insert = function (thread, user, callback) {
-    var db = this.getDB();
-    db.query("SELECT create_thread($thread, $user) AS id", {thread: thread, user: user}, function (err, results) {
-        if (err || results.rows.length == 0) {
-            return callback(err);
-        } else {
-            thread.id = results.rows[0].id;
-            return callback(err, results.rows[0].id);
-        }
-    });
-};
+Thread.fromSQL({
+    name: 'insert',
+    instance: true,
+    sql: (args, model) => gatepost.SQL`SELECT * FROM create_thread(${model.toJSON()}, ${args.user})`,
+    oneResult: true,
+    required: true
+});
 
 Thread.registerFactorySQL({
     name: 'update',
-    sql: [
-        'SELECT * from update_thread($thread, $user_id)'
-    ].join(' '),
+    instance: true,
+    sql: (args, model) => gatepost.SQL`SELECT * from update_thread(${model.toJSON()}, ${args.user_id})`,
     oneResult: true
 });
 
 ThreadPage.registerFactorySQL({
     name: "allByForum",
-    sql: [
-        "SELECT (SELECT n_live_tup FROM pg_stat_user_tables WHERE relname='threads') AS total,",
-        "json_agg(row_to_json(thread_rows)) as results,",
-        "count(thread_rows.*) as count",
-        'FROM (SELECT threads.id, threads.forum_id, threads.author, threads.subject, threads.open, threads.locked, threads.tags, threads.created, threads.updated',
-        'FROM threads',
-        'JOIN forums ON forums.id=threads.forums_id',
-        'JOIN forums_access ON forums_access.forum_id=forums.id', 
-        'WHERE forum_id=$forum_id AND forums_access.user_id=$user_id',
-        'ORDER BY id LIMIT $limit OFFSET $offset) thread_rows'
-    ].join(' '),
+    sql: (args) => gatepost.SQL`SELECT (SELECT n_live_tup FROM pg_stat_user_tables WHERE relname='threads') AS total,
+        json_agg(row_to_json(thread_rows)) as results,
+        count(thread_rows.*) as count
+        FROM (SELECT threads.id, threads.forum_id, threads.author, threads.subject, threads.open, threads.locked, threads.tags, threads.created, threads.updated
+        FROM threads
+        JOIN forums ON forums.id=threads.forums_id
+        JOIN forums_access ON forums_access.forum_id=forums.id 
+        WHERE forum_id=${args.forum_id} AND forums_access.user_id=${args.user_id}
+        ORDER BY id LIMIT ${args.limit} OFFSET ${args.offset}) thread_rows`,
     defaults: {
         limit: 20,
         offset: 0

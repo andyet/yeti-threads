@@ -1,9 +1,11 @@
-var gatepost = require('gatepost');
-var joi = require('joi');
-var util = require('util');
+"use strict";
+
+let gatepost = require('gatepost');
+let joi = require('joi');
+let util = require('util');
 
 //{"forum_id" : 67, "url_path" : "/forums/67", "table" : "forums", "other_id" : null, "type" : "INSERT", "when" : "2015-05-26T10:44:46.830204-07:00"}
-var Change = new gatepost.Model({
+let Change = new gatepost.Model({
     forum_id: {validate: joi.number().integer().min(0)},
     url_path: {
         derive: function () {
@@ -28,7 +30,7 @@ var Change = new gatepost.Model({
     cache: true
 });
 
-Changelist = new gatepost.Model({
+let Changelist = new gatepost.Model({
     results: {collection: 'change'},
     count: {type: 'integer'},
     total: {type: 'integer'}
@@ -36,15 +38,13 @@ Changelist = new gatepost.Model({
 
 Changelist.fromSQL({
     name: 'getByDateAndUser',
-    sql: [
-        'SELECT json_agg(row_to_json(logs)) AS results,',
-        'COUNT(logs.*) AS "count",',
-        '(SELECT count(distinct (forums_log.forum_id, forums_log.other_id)) as total from forums_log JOIN forums_access ON forums_log.forum_id=forums_access.forum_id WHERE forums_access.user_id=$user_id AND "time" >= $when) AS total', 
-        'FROM (SELECT DISTINCT ON (forums_log.forum_id, forums_log.other_id) * FROM forums_log',
-        'JOIN forums_access ON forums_log.forum_id=forums_access.forum_id',
-        'WHERE forums_access.user_id=$user_id AND "time" >= $when',
-        'LIMIT $limit OFFSET $offset) logs'
-    ].join(' '),
+    sql: (args, model) => gatepost.SQL`SELECT json_agg(row_to_json(logs)) AS results,
+COUNT(logs.*) AS "count",
+(SELECT count(distinct (forums_log.forum_id, forums_log.other_id)) as total from forums_log JOIN forums_access ON forums_log.forum_id=forums_access.forum_id WHERE forums_access.user_id=${args.user_id} AND "time" >= ${args.when}) AS total 
+FROM (SELECT DISTINCT ON (forums_log.forum_id, forums_log.other_id) * FROM forums_log
+JOIN forums_access ON forums_log.forum_id=forums_access.forum_id
+WHERE forums_access.user_id=${args.user_id} AND "time" >= ${args.when}
+LIMIT ${args.limit} OFFSET ${args.offset}) logs`,
     defaults: {
         offset: 0,
         limit: 20

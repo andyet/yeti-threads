@@ -49,7 +49,7 @@ module.exports = {
     create: {
         handler: function (request, reply) {
             var post = Post.create(request.payload);
-            Post.insert(post, request.auth.credentials.user, function (err) {
+            post.insert({user: request.auth.credentials.user}, function (err, post) {
                 return reply(err, post).code(201);
             });
         },
@@ -62,7 +62,7 @@ module.exports = {
     update: {
         handler: function (request, reply) {
             var post = Post.create(request.payload);
-            Post.update({post: post, user_id: request.auth.credentials.user}, reply);
+            post.update({user_id: request.auth.credentials.user}, reply);
         },
         auth: 'token',
         validate: {
@@ -76,7 +76,7 @@ module.exports = {
     delete: {
         handler: function (request, reply) {
             var post = Post.create({id: request.params.post_id, body: '[deleted]', author: '[deleted]'});
-            Post.update({post: post, user_id: request.auth.credentials.user}, reply);
+            post.update({user: request.auth.credentials.user}, reply);
         },
         auth: 'token',
         validate: {

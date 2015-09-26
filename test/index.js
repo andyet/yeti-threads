@@ -12,18 +12,8 @@ config.jwtKey = require('crypto').randomBytes(48).toString('base64');
 var token = jwt.sign({user: 'tester-user', scope: ['forum_admin']}, config.jwtKey, {expiresInMinutes: 15});
 var authorization = 'Bearer ' + token;
 
-var client = new pg.Client(config.db);
-gatepost.registerPG(client);
-client.connect();
-client.query("LISTEN forums_log");
-
+gatepost.setConnection(config.db);
 var start = null;
-
-client.on('notification', function (msg) {
-    if (start === null) {
-        start = JSON.parse(msg.payload).when;
-    }
-});
 
 var server;
 
@@ -38,6 +28,19 @@ var gateway = JSON.stringify({
 
 lab.experiment('forums', function () {
     var forum;
+    lab.before(function (done) {
+        gatepost.getClient((err, client, gpDone) => {
+            client.query("LISTEN forums_log", function (err) {
+                done();
+            });
+
+            client.on('notification', function (msg) {
+                if (start === null) {
+                    start = JSON.parse(msg.payload).when;
+                }
+            });
+        });
+    }),
     lab.before(function (done) {
         server = new Hapi.Server();
         server.connection(config.server);

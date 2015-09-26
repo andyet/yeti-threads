@@ -49,7 +49,7 @@ module.exports = {
     create: {
         handler: function (request, reply) {
             var thread = Thread.create(request.payload);
-            Thread.insert(thread, request.auth.credentials.user, function (err) {
+            thread.insert({user: request.auth.credentials.user}, function (err, thread) {
                 return reply(err, thread).code(201);
             });
         },
@@ -61,7 +61,9 @@ module.exports = {
 
     update: {
         handler: function (request, reply) {
-            Thread.update(request.params.thread_id, request.payload, reply);
+            var thread = Thread.create(request.payload);
+            thread.id = request.params.thread_id;
+            thread.update({user: request.auth.credentials.user}, reply);
         },
         auth: 'token',
         validate: {

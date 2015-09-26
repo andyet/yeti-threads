@@ -23,7 +23,8 @@ module.exports = {
     update: {
         handler: function (request, reply) {
             var payload = lodash.assign(request.payload, request.params);
-            Access.update(request.payload, reply);
+            var access = Access.create(payload);
+            access.update(reply);
         },
         auth: {
             strategy: 'token',
@@ -41,7 +42,8 @@ module.exports = {
     create: {
         handler: function (request, reply) {
             var payload = lodash.assign(request.payload, request.params);
-            Access.insert(request.payload, function (err) {
+            var access = Access.create(request.payload);
+            access.insert({}, function (err) {
                 return reply(err).code(201);
             });
         },

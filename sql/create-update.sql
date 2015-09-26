@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION create_forum(forum JSON, user_id TEXT) RETURNS INTEGER as $$
+CREATE OR REPLACE FUNCTION create_forum(forum JSON, user_id TEXT) RETURNS SETOF forums as $$
 DECLARE
     result INTEGER;
 BEGIN
@@ -8,7 +8,7 @@ BEGIN
         RAISE EXCEPTION 'cannot_create_root_forum';
     END IF;
     INSERT INTO forums (owner, name, description, parent_id) VALUES (user_id, forum->>'name', forum->>'description', (forum->>'parent_id')::integer) RETURNING id INTO result;
-    RETURN result;
+    RETURN QUERY SELECT * FROM forums WHERE id=result;
 END;
 $$ language 'plpgsql';
 
@@ -28,14 +28,14 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-CREATE OR REPLACE FUNCTION create_thread(thread JSON, user_id TEXT) RETURNS INTEGER as $$
+CREATE OR REPLACE FUNCTION create_thread(thread JSON, user_id TEXT) RETURNS SETOF threads as $$
 DECLARE
     result INTEGER;
 BEGIN
     PERFORM check_post_access(user_id, (thread->>'forum_id')::integer);
     INSERT INTO threads (forum_id, author, subject, open, locked, tags) VALUES ((thread->>'forum_id')::integer, user_id, thread->>'subject', (thread->>'open')::boolean, (thread->>'locked')::boolean, (select array_agg(x) as tags FROM json_array_elements_text(thread->'tags') AS x)) RETURNING id INTO result;
     INSERT INTO forums_log (forum_id, tbl, other_id, op) VALUES ((thread->>'forum_id')::integer, 'threads', result, 'INSERT');
-    RETURN result;
+    RETURN QUERY SELECT * FROM threads WHERE id=result;
 END;
 $$ language 'plpgsql';
 
@@ -55,7 +55,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-CREATE OR REPLACE FUNCTION create_post(post JSON, user_id TEXT) RETURNS INTEGER as $$
+CREATE OR REPLACE FUNCTION create_post(post JSON, user_id TEXT) RETURNS SETOF posts as $$
 DECLARE
     result INTEGER;
     f_id INTEGER;
@@ -64,7 +64,7 @@ BEGIN
     PERFORM check_post_access(user_id, f_id);
     INSERT INTO posts (author, body, parent_id, thread_id) VALUES (user_id, post->>'body', (post->>'parent_id')::integer, (post->>'thread_id')::integer) RETURNING id INTO result;
     INSERT INTO forums_log (forum_id, tbl, other_id, op) VALUES (f_id, 'posts', result, 'INSERT');
-    RETURN result;
+    RETURN QUERY SELECT * FROM posts WHERE id=result;
 END;
 $$ language 'plpgsql';
 

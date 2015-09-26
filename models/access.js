@@ -1,6 +1,8 @@
-var gatepost = require('gatepost');
+"use strict";
 
-var Access = new gatepost.Model({
+let gatepost = require('gatepost');
+
+let Access = new gatepost.Model({
     user_id: {type: 'string'},
     forum_id: {type: 'integer'},
     read: {type: 'boolean', required: true, default: false},
@@ -12,45 +14,37 @@ var Access = new gatepost.Model({
 
 Access.registerFactorySQL({
     name: "get",
-    sql: [
-        "SELECT user_id, forum_id, read, write, post FROM access WHERE user_id=$user_id AND forum_id=$forum_id"
-    ].join(' '),
+    sql: (args) => gatepost.SQL`SELECT user_id, forum_id, read, write, post FROM access WHERE user_id=${args.user_id} AND forum_id=${args.forum_id}`,
     oneResult: true
 });
 
-var AccessPage = new gatepost.Model({
+let AccessPage = new gatepost.Model({
     count: {type: 'integer'},
     total: {type: 'integer'},
     results: {collection: Access}
 });
 
-AccessPage.registerFactorySQL({
+AccessPage.fromSQL({
     name: "list",
-    sql: [
-        "SELECT user_id, forum_id, read, write, post FROM access LIMIT $limit OFFSET $offset ORDER BY user_id, forum_id"
-    ].join(' '),
+    sql: (args) => gatepost.SQL`SELECT user_id, forum_id, read, write, post FROM access LIMIT $limit OFFSET $(args.offset) ORDER BY user_id, forum_id`,
     defaults: {
         limit: 20,
         offset: 0
     }
 });
 
-AccessPage.registerFactorySQL({
+AccessPage.fromSQL({
     name: "listByUser",
-    sql: [
-        "SELECT user_id, forum_id, read, write FROM access WHERE user_id=$user_id LIMIT $limit OFFSET $offset ORDER BY forum_id"
-    ].join(' '),
+    sql: (args) => gatepost.SQL`SELECT user_id, forum_id, read, write FROM access WHERE user_id=${args.user_id} LIMIT ${args.limit} OFFSET ${args.offset} ORDER BY forum_id`,
     defaults: {
         limit: 20,
         offset: 0
     }
 });
 
-AccessPage.registerFactorySQL({
+AccessPage.fromSQL({
     name: "listByForum",
-    sql: [
-        "SELECT user_id, forum_id, read, write FROM access WHERE forum_id=$forum_id LIMIT $limit OFFSET $offset ORDER BY user_id"
-    ].join(' '),
+    sql: (args, model) => gatepost.SQL`SELECT user_id, forum_id, read, write FROM access WHERE forum_id=${args.forum_id} LIMIT $limit OFFSET ${args.offset} ORDER BY user_id`,
     defaults: {
         limit: 20,
         offset: 0
@@ -59,18 +53,17 @@ AccessPage.registerFactorySQL({
 
 Access.list = AccessPage.list;
 
-Access.insert = function (data, callback) {
-    var db = this.getDB();
-    db.query("INSERT INTO forums_access (user_id, forum_id, read, write, post) VALUES ($user_id, $forum_id, $read, $write, $post)", data, function (err, result) {
-        callback(err);
-    });
-};
+Access.fromSQL({
+    name: 'insert',
+    instance: true,
+    sql: (args, model) => gatepost.SQL`INSERT INTO forums_access (user_id, forum_id, read, write, post) VALUES (${model.user_id}, ${model.forum_id}, ${model.read}, ${model.write}, ${model.post})`,
+});
 
-Access.update = function (data, callback) {
-    var db = this.getDB();
-    db.query("UPDATE forums_access SET read=$read, write=$write, post=$post WHERE user_id=$user_id, forum_id=$forum_id", function (err, result) {
-        callback(err);
-    });
-};
+Access.fromSQL({
+    name: 'update',
+    instance: true,
+    sql: (args, model) => gatepost.SQL`UPDATE forums_access SET read=${model.read}, write=${model.write}, post=${model.post} WHERE user_id=${model.user_id}, forum_id=${model.forum_id}`,
+});
+
 
 module.exports = Access;
