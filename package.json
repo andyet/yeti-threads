@@ -1,10 +1,11 @@
 {
   "name": "@andyet/yeti-threads",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "NODE_ENV=test lab -l"
+    "test": "NODE_ENV=test lab -l",
+    "lint": "eslint ."
   },
   "author": "Nathan Fritz",
   "license": "MIT",
@@ -30,5 +31,8 @@
     "pg": "^4.4.4",
     "sql-template-strings": "^1.1.2",
     "ws": "^0.7.2"
+  },
+  "devDependencies": {
+    "eslint": "^2.0.0"
   }
 }

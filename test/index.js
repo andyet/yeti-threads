@@ -6,30 +6,32 @@ const config = require('getconfig');
 const gatepost = require('gatepost')(config.db);
 const lab = exports.lab = require('lab').script();
 const Hapi = require('hapi');
-const util = require('util');
 const code = require('code');
 const jwt = require('jsonwebtoken');
 const pg = require('pg');
 
 config.jwtKey = require('crypto').randomBytes(48).toString('base64');
-const token = jwt.sign({user: 'tester-user', scope: ['forum_admin']}, config.jwtKey, {expiresIn: 900});
-const authorization = 'Bearer ' + token;
+const token = jwt.sign({
+  user: 'tester-user',
+  scope: ['forum_admin']
+}, config.jwtKey, { expiresIn: 900 });
+const authorization = `Bearer ${token}`;
 
 let start = null;
 
 let server;
 
-lab.experiment('forums', function () {
+lab.experiment('forums', () => {
 
   let forum;
 
-  lab.before(function (done) {
+  lab.before((done) => {
     pg.connect(config.db, (err, client) => {
-      client.query("LISTEN forums_log", function (err) {
+      client.query('LISTEN forums_log', (err) => {
         done();
       });
 
-      client.on('notification', function (msg) {
+      client.on('notification', (msg) => {
         if (start === null) {
           start = JSON.parse(msg.payload).when;
         }
@@ -37,7 +39,7 @@ lab.experiment('forums', function () {
     });
   }),
 
-  lab.before(function (done) {
+  lab.before((done) => {
     server = new Hapi.Server();
     server.connection(config.server);
 
@@ -56,13 +58,13 @@ lab.experiment('forums', function () {
         register: require('drboom'),
         options: {
           plugins: [
-            require('drboom-pg')({}),
-            require('drboom-gatepost')({Boom: Boom, Gatepost: gatepost}),
-            require('drboom-joi')({Boom})
+            require('drboom-pg')({ }),
+            require('drboom-gatepost')({ Boom: Boom, Gatepost: gatepost }),
+            require('drboom-joi')({ Boom })
           ]
         }
       }
-    ], function (err) {
+    ], (err) => {
       if (err) {
         throw err;
       }
@@ -70,7 +72,7 @@ lab.experiment('forums', function () {
     });
   });
 
-  lab.before(function (done) {
+  lab.before((done) => {
     server.inject({
       method: 'post',
       url: '/access/tester-user/forum/1',
@@ -82,12 +84,12 @@ lab.experiment('forums', function () {
       headers: {
         authorization: authorization
       }
-    }, function (res) {
+    }, (res) => {
       done();
     });
   });
 
-  lab.test('can create forum', function (done) {
+  lab.test('can create forum', (done) => {
     server.inject({
       method: 'post',
       url: '/forums',
@@ -99,7 +101,7 @@ lab.experiment('forums', function () {
       headers: {
         Authorization: authorization
       }
-    }, function (res) {
+    }, (res) => {
       code.expect(res.statusCode).to.equal(201);
       code.expect(res.payload).to.not.equal('');
       forum = JSON.parse(res.payload);
@@ -107,111 +109,103 @@ lab.experiment('forums', function () {
       done();
     });
   });
-  lab.test('can get forums', function (done) {
+  lab.test('can get forums', (done) => {
     server.inject({
       method: 'get',
-      url: '/forums/' + forum.id,
+      url: `/forums/${forum.id}`,
       headers: {
         authorization: authorization
       }
-    }, function (res) {
+    }, (res) => {
       code.expect(res.statusCode).to.equal(200);
       code.expect(res.payload).to.not.equal('');
-      var pl = JSON.parse(res.payload);
+      const pl = JSON.parse(res.payload);
       code.expect(pl.name).to.equal('test1');
       done();
     });
   });
 
-  lab.test('can update forum', function (done) {
+  lab.test('can update forum', (done) => {
     server.inject({
       method: 'put',
-      url: '/forums/' + forum.id,
+      url: `/forums/${forum.id}`,
       payload: JSON.stringify({
-        name: 'test2',
+        name: 'test2'
       }),
       headers: {
         authorization: authorization
       }
-    }, function (res) {
+    }, (res) => {
       code.expect(res.statusCode).to.equal(200);
       code.expect(res.payload).to.not.equal('');
-      var pl = JSON.parse(res.payload);
+      const pl = JSON.parse(res.payload);
       code.expect(pl.name).to.equal('test2');
       done();
     });
   });
-  lab.test("can't update forum with unauthed user", function (done) {
+  lab.test('can\'t update forum with unauthed user', (done) => {
     server.inject({
       method: 'put',
-      url: '/forums/' + forum.id,
+      url: `/forums/${forum.id}`,
       payload: JSON.stringify({
-        name: 'test2',
+        name: 'test2'
       }),
       headers: {
-        authorization: 'Bearer ' + jwt.sign({
+        authorization: `Bearer ${ jwt.sign({
           user_id: 'derpina',
           scopes: ['forum_admin']
-        }, config.jwtKey, {expiresIn: 900})
-        /*
-        gateway: JSON.stringify({
-          client_id: 'foo',
-          user_id: 'derpina',
-          api: 'yeti-threads-api',
-          scopes: ['forum_admin']
-        })
-        */
+        }, config.jwtKey, { expiresIn: 900 }) }`
       }
-    }, function (res) {
+    }, (res) => {
       code.expect(res.statusCode).to.equal(403);
       done();
     });
   });
-  lab.test("get 404 on bad id", function (done) {
+  lab.test('get 404 on bad id', (done) => {
     server.inject({
       method: 'get',
-      url: '/forums/' + -32,
+      url: '/forums/-32',
       headers: {
         authorization: authorization
       }
-    }, function (res) {
+    }, (res) => {
       code.expect(res.statusCode).to.equal(404);
       done();
     });
   });
-  lab.test('can list forums', function (done) {
+  lab.test('can list forums', (done) => {
     server.inject({
       method: 'get',
       url: '/forums',
       headers: {
         authorization: authorization
       }
-    }, function (res) {
+    }, (res) => {
       code.expect(res.statusCode).to.equal(200);
       code.expect(res.payload).to.not.equal('');
-      var pl = JSON.parse(res.payload);
+      const pl = JSON.parse(res.payload);
       code.expect(pl.count).to.equal(2);
       done();
     });
   });
-  lab.test('can delete forum', function (done) {
+  lab.test('can delete forum', (done) => {
     server.inject({
       method: 'delete',
-      url: '/forums/' + forum.id,
+      url: `/forums/${forum.id}`,
       headers: {
         authorization: authorization
       }
-    }, function (res) {
+    }, (res) => {
       code.expect(res.statusCode).to.equal(200);
       done();
     });
   });
 });
 
-lab.experiment('threads', function () {
-  var forum;
-  var thread;
-  lab.before(function (done) {
+lab.experiment('threads', () => {
+  let forum;
+  let thread;
+  lab.before((done) => {
     server.inject({
       method: 'post',
       url: '/forums',
@@ -223,7 +217,7 @@ lab.experiment('threads', function () {
       headers: {
         authorization: authorization
       }
-    }, function (res) {
+    }, (res) => {
       code.expect(res.statusCode).to.equal(201);
       code.expect(res.payload).to.not.equal('');
       forum = JSON.parse(res.payload);
@@ -231,10 +225,10 @@ lab.experiment('threads', function () {
       done();
     });
   });
-  lab.before(function (done) {
+  lab.before((done) => {
     server.inject({
       method: 'post',
-      url: '/access/tester-user/forum/' + forum.id,
+      url: `/access/tester-user/forum/{$forum.id}`,
       payload: JSON.stringify({
         write: true,
         read: true,
@@ -243,23 +237,23 @@ lab.experiment('threads', function () {
       headers: {
         authorization: authorization
       }
-    }, function (res) {
+    }, (res) => {
       done();
     });
   });
 
-  lab.test('can create thread', function (done) {
+  lab.test('can create thread', (done) => {
     server.inject({
       method: 'post',
       url: '/threads',
       payload: JSON.stringify({
         subject: 'test thread 1',
-        forum_id: forum.id,
+        forum_id: forum.id
       }),
       headers: {
         authorization: authorization
       }
-    }, function (res) {
+    }, (res) => {
       code.expect(res.statusCode).to.equal(201);
       code.expect(res.payload).to.not.equal('');
       thread = JSON.parse(res.payload);
@@ -269,14 +263,14 @@ lab.experiment('threads', function () {
     });
   });
 
-  lab.test('can get thread', function (done) {
+  lab.test('can get thread', (done) => {
     server.inject({
       method: 'get',
-      url: '/threads/' + thread.id,
+      url: `/threads/${thread.id}`,
       headers: {
         authorization: authorization
       }
-    }, function (res) {
+    }, (res) => {
       code.expect(res.statusCode).to.equal(200);
       code.expect(res.payload).to.not.equal('');
       const pl = JSON.parse(res.payload);
@@ -286,14 +280,14 @@ lab.experiment('threads', function () {
     });
   });
 
-  lab.test('can list threads', function (done) {
+  lab.test('can list threads', (done) => {
     server.inject({
       method: 'get',
       url: '/threads',
       headers: {
         authorization: authorization
       }
-    }, function (res) {
+    }, (res) => {
       code.expect(res.statusCode).to.equal(200);
       code.expect(res.payload).to.not.equal('');
       const pl = JSON.parse(res.payload);
@@ -303,38 +297,41 @@ lab.experiment('threads', function () {
     });
   });
 
-  lab.test('can delete thread', function (done) {
+  lab.test('can delete thread', (done) => {
     server.inject({
       method: 'delete',
-      url: '/threads/' + thread.id,
+      url: `/threads/${thread.id}`,
       headers: {
         authorization: authorization
       }
-    }, function (res) {
+    }, (res) => {
       code.expect(res.statusCode).to.equal(200);
       done();
     });
   });
 
-  lab.after(function (done) {
+  lab.after((done) => {
     server.inject({
       method: 'delete',
-      url: '/forums/' + forum.id,
+      url: `/forums/${forum.id}`,
       headers: {
         authorization: authorization
       }
-    }, function (res) {
+    }, (res) => {
       code.expect(res.statusCode).to.equal(200);
       done();
     });
   });
 });
 
-lab.experiment('posts', function () {
-  var forum;
-  var thread;
-  var post1, post2, post3, post4;
-  lab.before(function (done) {
+lab.experiment('posts', () => {
+  let forum;
+  let thread;
+  let post1;
+  let post2;
+  let post3;
+  let post4;
+  lab.before((done) => {
     server.inject({
       method: 'post',
       url: '/forums',
@@ -346,7 +343,7 @@ lab.experiment('posts', function () {
       headers: {
         authorization: authorization
       }
-    }, function (res) {
+    }, (res) => {
       code.expect(res.statusCode).to.equal(201);
       code.expect(res.payload).to.not.equal('');
       forum = JSON.parse(res.payload);
@@ -354,10 +351,10 @@ lab.experiment('posts', function () {
       done();
     });
   });
-  lab.before(function (done) {
+  lab.before((done) => {
     server.inject({
       method: 'post',
-      url: '/access/tester-user/forum/' + forum.id,
+      url: `/access/tester-user/forum/${forum.id}`,
       payload: JSON.stringify({
         write: true,
         read: true,
@@ -366,23 +363,23 @@ lab.experiment('posts', function () {
       headers: {
         authorization: authorization
       }
-    }, function (res) {
+    }, (res) => {
       done();
     });
   });
 
-  lab.test('can create thread', function (done) {
+  lab.test('can create thread', (done) => {
     server.inject({
       method: 'post',
       url: '/threads',
       payload: JSON.stringify({
         subject: 'test thread 1',
-        forum_id: forum.id,
+        forum_id: forum.id
       }),
       headers: {
         authorization: authorization
       }
-    }, function (res) {
+    }, (res) => {
       code.expect(res.statusCode).to.equal(201);
       code.expect(res.payload).to.not.equal('');
       thread = JSON.parse(res.payload);
@@ -392,18 +389,18 @@ lab.experiment('posts', function () {
     });
   });
 
-  lab.test('can create post', function (done) {
+  lab.test('can create post', (done) => {
     server.inject({
       method: 'post',
       url: '/posts',
       payload: JSON.stringify({
         body: 'test post 1',
-        thread_id: thread.id,
+        thread_id: thread.id
       }),
       headers: {
         authorization: authorization
       }
-    }, function (res) {
+    }, (res) => {
       code.expect(res.statusCode).to.equal(201);
       code.expect(res.payload).to.not.equal('');
       post1 = JSON.parse(res.payload);
@@ -412,7 +409,7 @@ lab.experiment('posts', function () {
       done();
     });
   });
-  lab.test('can create post 2', function (done) {
+  lab.test('can create post 2', (done) => {
     server.inject({
       method: 'post',
       url: '/posts',
@@ -424,7 +421,7 @@ lab.experiment('posts', function () {
       headers: {
         authorization: authorization
       }
-    }, function (res) {
+    }, (res) => {
       code.expect(res.statusCode).to.equal(201);
       code.expect(res.payload).to.not.equal('');
       post2 = JSON.parse(res.payload);
@@ -433,7 +430,7 @@ lab.experiment('posts', function () {
       done();
     });
   });
-  lab.test('can create post 3', function (done) {
+  lab.test('can create post 3', (done) => {
     server.inject({
       method: 'post',
       url: '/posts',
@@ -445,7 +442,7 @@ lab.experiment('posts', function () {
       headers: {
         authorization: authorization
       }
-    }, function (res) {
+    }, (res) => {
       code.expect(res.statusCode).to.equal(201);
       code.expect(res.payload).to.not.equal('');
       post3 = JSON.parse(res.payload);
@@ -454,7 +451,7 @@ lab.experiment('posts', function () {
       done();
     });
   });
-  lab.test('can create post 4', function (done) {
+  lab.test('can create post 4', (done) => {
     server.inject({
       method: 'post',
       url: '/posts',
@@ -466,7 +463,7 @@ lab.experiment('posts', function () {
       headers: {
         authorization: authorization
       }
-    }, function (res) {
+    }, (res) => {
       code.expect(res.statusCode).to.equal(201);
       code.expect(res.payload).to.not.equal('');
       post4 = JSON.parse(res.payload);
@@ -476,14 +473,14 @@ lab.experiment('posts', function () {
     });
   });
 
-  lab.test('can get posts in threaded order', function (done) {
+  lab.test('can get posts in threaded order', (done) => {
     server.inject({
       method: 'get',
-      url: '/threads/' + thread.id + '/posts',
+      url: `/threads/${thread.id}/posts`,
       headers: {
         authorization: authorization
       }
-    }, function (res) {
+    }, (res) => {
       code.expect(res.statusCode).to.equal(200);
       code.expect(res.payload).to.not.equal('');
       const pl = JSON.parse(res.payload);
@@ -496,55 +493,55 @@ lab.experiment('posts', function () {
     });
   });
 
-  lab.test('can delete post', function (done) {
+  lab.test('can delete post', (done) => {
     server.inject({
       method: 'delete',
-      url: '/posts/' + post1.id,
+      url: `/posts/${post1.id}`,
       headers: {
         authorization: authorization
       }
-    }, function (res) {
+    }, (res) => {
       code.expect(res.statusCode).to.equal(200);
       done();
     });
   });
 
-  lab.test('get changelog', function (done) {
+  lab.test('get changelog', (done) => {
     server.inject({
       method: 'get',
-      url: '/changes?when=' + start,
+      url: `/changes?when=${start}`,
       headers: {
         authorization: authorization
       }
-    }, function (res) {
+    }, (res) => {
       code.expect(res.statusCode).to.equal(200);
-      var pl = JSON.parse(res.payload);
+      const pl = JSON.parse(res.payload);
       code.expect(pl.results.length).to.equal(9);
       done();
     });
   });
 
-  lab.after('can delete thread', function (done) {
+  lab.after('can delete thread', (done) => {
     server.inject({
       method: 'delete',
-      url: '/threads/' + thread.id,
+      url: `/threads/${thread.id}`,
       headers: {
         authorization: authorization
       }
-    }, function (res) {
+    }, (res) => {
       code.expect(res.statusCode).to.equal(200);
       done();
     });
   });
 
-  lab.after(function (done) {
+  lab.after((done) => {
     server.inject({
       method: 'delete',
-      url: '/forums/' + forum.id,
+      url: `/forums/${forum.id}`,
       headers: {
         authorization: authorization
       }
-    }, function (res) {
+    }, (res) => {
       code.expect(res.statusCode).to.equal(200);
       done();
     });
