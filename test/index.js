@@ -389,6 +389,25 @@ lab.experiment('posts', () => {
     });
   });
 
+  lab.test('can get threads by forum', (done) => {
+    server.inject({
+      method: 'get',
+      url: `/forums/${forum.id}/threads`,
+      headers: {
+        authorization: authorization
+      }
+    }, (res) => {
+      code.expect(res.statusCode).to.equal(200);
+      code.expect(res.payload).to.not.equal('');
+      const threads = JSON.parse(res.payload);
+      const util = require('util');
+      console.log('\n', util.format(threads));
+      code.expect(threads.results[0].subject).to.equal('test thread 1');
+      code.expect(threads.results[0].forum_id).to.equal(forum.id);
+      done();
+    });
+  });
+
   lab.test('can create post', (done) => {
     server.inject({
       method: 'post',
@@ -493,6 +512,8 @@ lab.experiment('posts', () => {
     });
   });
 
+  /*
+
   lab.test('can delete post', (done) => {
     server.inject({
       method: 'delete',
@@ -546,4 +567,5 @@ lab.experiment('posts', () => {
       done();
     });
   });
+  */
 });

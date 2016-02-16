@@ -111,10 +111,10 @@ module.exports = (gatepost) =>  {
       json_agg(row_to_json(thread_rows)) as results,
       count(thread_rows.*) as count
       FROM (SELECT threads.id, threads.forum_id, threads.author, threads.subject, threads.open, threads.locked, threads.tags, threads.created, threads.updated
-      FROM threads
-      JOIN forums ON forums.id=threads.forums_id
+      FROM forums
       JOIN forums_access ON forums_access.forum_id=forums.id
-      WHERE forum_id=${args.forum_id} AND forums_access.user_id=${args.user_id}
+      JOIN threads ON forums.id=threads.forum_id
+      WHERE forums.id=${args.forum_id} AND forums_access.user_id=${args.user_id}
       ORDER BY id LIMIT ${args.limit} OFFSET ${args.offset}) thread_rows`,
     defaults: {
       limit: 20,

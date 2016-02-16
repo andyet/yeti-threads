@@ -30,6 +30,8 @@ exports.register = function (plugin, options, done) {
     }
   })
 
+  server.cors = true;
+
   //forum
   server.route({ method: 'get', path: '/forums/{forum_id}', config: Forums.get});
   server.route({ method: 'get', path: '/forums', config: Forums.list});

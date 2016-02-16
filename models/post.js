@@ -116,7 +116,7 @@ module.exports = (gatepost) => {
   UNION ALL
     SELECT p.id, p.author, p.body, p.parent_id, p.thread_id, p.path, p.created, p.updated FROM included_posts inc_p, posts p WHERE p.parent_id=inc_p.id
   )
-  SELECT * FROM included_posts
+  SELECT included_posts.* FROM included_posts
   JOIN threads ON included_posts.thread_id=threads.id
   JOIN forums ON threads.forum_id=forums.id
   JOIN forums_access ON forums_access.forum_id=forums.id
